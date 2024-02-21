@@ -24,8 +24,8 @@ export class ComfyViewWorkflowApp extends ComfyApp {
         return response.json();
       })
       .then((data) => {
-        console.log("getCloudflowVersion data", data);
         const workflowVer = data.data;
+    
         this.#defs = JSON.parse(workflowVer.nodeDefs);
         this.#workflow = JSON.parse(workflowVer.json);
       })
