@@ -1,8 +1,10 @@
-from .githubUtils import get_github_repo_stars
+from .githubUtils import download_and_upload_to_s3, get_github_repo_stars
 import datetime
 import os 
 from dotenv import load_dotenv
 import boto3
+from .githubUtils import get_github_repo_stars
+import json
 
 scanner_path = os.path.dirname(__file__)
 root_path = os.path.dirname(os.path.dirname(scanner_path))
@@ -12,8 +14,8 @@ load_dotenv(os.path.join(root_path, '.env.local'))
 aws_access_key_id = os.getenv('AWS_ACCESS_KEY_ID')
 aws_secret_access_key = os.getenv('AWS_SECRET_ACCESS_KEY')
 aws_region = os.getenv('AWS_REGION')
-node_table_name = "Node" + os.getenv('DDB_TABLE_POSTFIX')# DDB_TABLE_CUSTOM_NODE
-package_table_name = "NodePackage" + os.getenv('DDB_TABLE_POSTFIX')
+node_table_name = "ComfyNode" + os.getenv('DDB_TABLE_POSTFIX')# DDB_TABLE_CUSTOM_NODE
+package_table_name = "ComfyNodePackage" + os.getenv('DDB_TABLE_POSTFIX')
 log_file = os.path.join(root_path, 'log.txt')
 
 if not aws_access_key_id or not aws_secret_access_key:
@@ -82,4 +84,39 @@ def create_pacakge_ddb(pacakge_data:dict):
         if e.response['Error']['Code'] == 'ConditionalCheckFailedException':
             print("A record with the same gitHtmlUrl was inserted concurrently.")
         print("Error adding package item to DynamoDB:", e)
+        return None
+
+#####v2######
+def put_node_package_ddb(item):
+    try:
+        repo_data = get_github_repo_stars(item.get('gitHtmlUrl'))
+        owner_avatar_url= repo_data['owner_avatar_url'] if 'owner_avatar_url' in repo_data else None
+        star_count = repo_data['stars'] if 'stars' in repo_data else None
+        
+        webDir = item.get('webDir')
+        jsFilePaths = None
+        if webDir:
+            jsFilePaths = json.dumps(download_and_upload_to_s3(item['gitRepo'], webDir))
+        response = ddb_package_table.put_item(Item={
+            **item,
+            'updatedAt': datetime.datetime.now().replace(microsecond=0).isoformat(),
+            'totalStars': star_count,
+            'ownerGitAvatarUrl': owner_avatar_url,
+            'description': repo_data.get('description',''),
+            'jsFilePaths': jsFilePaths
+        })
+        return item
+    except Exception as e:
+        print("❌🔴Error adding package item to DynamoDB:", e)
+        return None
+
+def put_node_ddb(item):
+    try:
+        response = ddb_node_table.put_item(Item={
+            **item,
+            'updatedAt': datetime.datetime.now().replace(microsecond=0).isoformat(),
+        })
+        return item
+    except Exception as e:
+        print("❌🔴Error adding package item to DynamoDB:", e)
         return None
