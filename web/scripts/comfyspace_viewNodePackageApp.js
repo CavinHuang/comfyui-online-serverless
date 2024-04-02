@@ -28,27 +28,58 @@ export class ComfyViewNodePackageApp extends ComfyApp {
   /** @type {{nodeDefs:string,jsFilePaths:string}} */
   nodePackage = null;
   pacakgeID = null;
+  nodeType= null;
   extensionFilesPath =  COMFYUI_CORE_EXTENSIONS;
+  canvasHeightRequired = 500;
   constructor() {
     super();
     const params = new URLSearchParams(window.location.search);
-    this.pacakgeID = params.get("packageID");
+    this.pacakgeID = params.get("packageID").replaceAll("/", "_");
+    this.nodeType = params.get('node');
+  }
+  async setupMouseWheel() {
+    LGraphCanvas.prototype.processMouseWheel = function(e) {
+      if (!this.graph || !this.allow_dragcanvas) {
+          return;
+      }
+  
+      // Get the wheel delta
+      var delta = e.wheelDeltaY != null ? e.wheelDeltaY : e.detail * -60;
+  
+      // Scaling factor to adjust the sensitivity, might need tuning based on testing
+      var sensitivity = 0.5;
+  
+      // Apply the delta directly after scaling for sensitivity adjustment
+      // this.ds.offset[1] -= delta * sensitivity;
+      this.ds.offset[1] += delta * sensitivity;
+  
+      // Mark the canvas as needing a redraw
+      this.dirty_canvas = true;
+      this.dirty_bgcanvas = true;
+  
+      e.preventDefault();
+      return false; // Prevent the default scrolling behavior of the browser
+  };
+  
+  
   }
   async setup() {
     // to disable mousewheel zooming
-    LGraphCanvas.prototype.processMouseWheel =()=>{}
+    // LGraphCanvas.prototype.processMouseWheel =()=>{}
+    this.setupMouseWheel();
+    LGraphCanvas.prototype.processMouseMove = ()=>{}
+    // LGraphCanvas.prototype.processMouseDown = ()=>{}
     if(this.pacakgeID) {
       try {
-        const resp = await fetch("/api/getNodePackage?id="+this.pacakgeID);
+        const resp = await fetch("https://www.nodecafe.org/api/getNodePackage?id="+this.pacakgeID);
         this.nodePackage = (await resp.json())?.data;
         this.nodeDefs = JSON.parse(this.nodePackage.nodeDefs??"{}"); 
       } catch (error) {
         console.error("Error fetching node package", error);
       }
     }
-    console.log("this.nodeDefs", this.nodeDefs);
-    await super.setup();
     await this.loadPackageExtensions();
+    await super.setup();
     await this.addNodesToGraph();
     this.canvasEl.addEventListener("click", (e)=> {
 			var node = app.graph.getNodeOnPos( e.clientX, e.clientY, app.graph._nodes, 5 );
@@ -64,26 +95,8 @@ export class ComfyViewNodePackageApp extends ComfyApp {
 		});
   }
   async loadPackageExtensions() {
-    try {
-        // download the extension js files to public/web/extensions
-        await fetch('/api/listComfyExtensions?packageID='+this.pacakgeID);
-    } catch (error) {
-        console.error("Error loading extension", ext, error);
-    }
     const jsFilePaths = JSON.parse(this.nodePackage?.jsFilePaths || "[]");
-    console.log("jsFilePaths", jsFilePaths);
-    const extensionPromises = jsFilePaths.map(async ext => {
-        try {
-            await import(`/web/extensions/${this.pacakgeID}/${ext}`);
-        } catch (error) {
-            console.error("Error loading extension", ext, error);
-        }
-    });
-    try {
-      await Promise.all(extensionPromises);
-    } catch (error) {
-      console.error("Error loading extensions", error);
-    }
+    this.extensionFilesPath = this.extensionFilesPath.concat(jsFilePaths.map(ext=>"/extensions/"+this.pacakgeID+"/"+ext));
 }
   async addNodesToGraph() {
     window.addEventListener('message', function(event) {
@@ -103,38 +116,46 @@ export class ComfyViewNodePackageApp extends ComfyApp {
     const gap = 20;
     let maxHeightInRow = 0; // Track the tallest node in the current row.
     Object.keys(this.nodeDefs).forEach((nodeType, index) => {
-      const node = LiteGraph.createNode(nodeType);
-      const nodeWidth = node.size[0];
-      const nodeHeight = node.size[1];
-    
-      // Check if the node can fit in the canvas width at all
-      if (nodeWidth > canvasWidth) {
-        console.warn(`Node of type ${nodeType} exceeds the canvas width and cannot be placed.`);
+      if(this.nodeType && this.nodeType !== nodeType) {
+        return;
       }
-    
-      // Preemptively move to the next row if the current node would exceed the canvas width
-      if (currentPosition[0] + nodeWidth + gap > canvasWidth) {
-        currentPosition[0] = LEFT_PADDING; // Reset X position to start of the next row
-        currentPosition[1] += maxHeightInRow + rowGap; // Move Y position down
-        maxHeightInRow = nodeHeight; // Start tracking the new row's maxHeight with the current node
-      } else {
-        // The node fits in the current row, update maxHeightInRow
-        maxHeightInRow = Math.max(maxHeightInRow, nodeHeight);
-      }
-    
-      // Place the node at the current position
-      node.pos = [...currentPosition];
-      this.graph.add(node);
-    
-      // Move currentPosition right for the next node
-      currentPosition[0] += nodeWidth + gap;
+      try{
+        const node = LiteGraph.createNode(nodeType);
+        const nodeWidth = node.size[0];
+        const nodeHeight = node.size[1];
+      
+        // Check if the node can fit in the canvas width at all
+        if (nodeWidth > canvasWidth) {
+          console.warn(`Node of type ${nodeType} exceeds the canvas width and cannot be placed.`);
+        }
+      
+        // Preemptively move to the next row if the current node would exceed the canvas width
+        if (currentPosition[0] + nodeWidth + gap > canvasWidth) {
+          currentPosition[0] = LEFT_PADDING; // Reset X position to start of the next row
+          currentPosition[1] += maxHeightInRow + rowGap; // Move Y position down
+          maxHeightInRow = nodeHeight; // Start tracking the new row's maxHeight with the current node
+        } else {
+          // The node fits in the current row, update maxHeightInRow
+          maxHeightInRow = Math.max(maxHeightInRow, nodeHeight);
+        }
+      
+        // Place the node at the current position
+        node.pos = [...currentPosition];
+        this.graph.add(node);
+      
+        // Move currentPosition right for the next node
+        currentPosition[0] += nodeWidth + gap;
 
+        // After adding and positioning all nodes
+        const totalHeightRequired = currentPosition[1] + maxHeightInRow + rowGap; // Add one more rowGap for bottom padding
+        var message = { type: 'updateCanvasHeight', height: totalHeightRequired };
+        this.graph.canvasHeightRequired = totalHeightRequired;
+        // Send the message to the parent window
+        window.parent.postMessage(message, window.location.origin); 
+        // Adjust canvas height to fit all nodes
+      } catch(e) {
+        console.error("Error adding node", nodeType, e);
+      }
     });
-    // After adding and positioning all nodes
-    const totalHeightRequired = currentPosition[1] + maxHeightInRow + rowGap; // Add one more rowGap for bottom padding
-    var message = { type: 'updateCanvasHeight', height: totalHeightRequired };
-    // Send the message to the parent window
-    window.parent.postMessage(message, window.location.origin); 
-    // Adjust canvas height to fit all nodes
   }
 }
