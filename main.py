@@ -5,6 +5,8 @@ import os
 import importlib.util
 import folder_paths
 import time
+from dotenv import load_dotenv
+load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 
 def execute_prestartup_script():
     def execute_script(script_path):
@@ -242,9 +244,9 @@ if __name__ == "__main__":
             webbrowser.open(f"http://{address}:{port}")
         call_on_start = startup_server
 
-    # try:
-    #     loop.run_until_complete(run(server, address=args.listen, port=args.port, verbose=not args.dont_print_server, call_on_start=call_on_start))
-    # except KeyboardInterrupt:
-    #     print("\nStopped server")
+    try:
+        loop.run_until_complete(run(server, address=args.listen, port=args.port, verbose=not args.dont_print_server, call_on_start=call_on_start))
+    except KeyboardInterrupt:
+        print("\nStopped server")
 
     cleanup_temp()
