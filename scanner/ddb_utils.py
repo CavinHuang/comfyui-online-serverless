@@ -13,8 +13,8 @@ import json
 #     print("!!!!Missing AWS credentials")
 #     raise ValueError("Missing AWS credentials")
 
-node_table_name = "ComfyNode" + os.environ.get('DDB_TABLE_POSTFIX')# DDB_TABLE_CUSTOM_NODE
-package_table_name = "ComfyNodePackage" + os.environ.get('DDB_TABLE_POSTFIX')
+node_table_name = "ComfyNode" + os.environ.get('DDB_TABLE_POSTFIX', "")# DDB_TABLE_CUSTOM_NODE
+package_table_name = "ComfyNodePackage" + os.environ.get('DDB_TABLE_POSTFIX', "")
 
 # Initialize a DynamoDB client
 dynamodb = boto3.resource(
