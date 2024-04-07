@@ -3,18 +3,13 @@ import subprocess
 import requests
 import os
 import shutil
-from dotenv import load_dotenv
-from dotenv import load_dotenv
 import boto3
 
-scanner_path = os.path.dirname(__file__)
-root_path = os.path.dirname(os.path.dirname(scanner_path))
-load_dotenv(os.path.join(root_path, '.env.local'))
-github_key = os.getenv('GITHUB_API_KEY')
-s3_bucket_name = os.getenv('S3_BUCKET_NAME')
-aws_access_key_id = os.getenv('AWS_ACCESS_KEY_ID')
-aws_secret_access_key = os.getenv('AWS_SECRET_ACCESS_KEY')
-aws_region = os.getenv('AWS_REGION')
+github_key = os.environ.get('GITHUB_API_KEY')
+s3_bucket_name = os.environ.get('S3_BUCKET_NAME')
+aws_access_key_id = os.environ.get('AWS_ACCESS_KEY_ID')
+aws_secret_access_key = os.environ.get('AWS_SECRET_ACCESS_KEY')
+aws_region = os.environ.get('AWS_REGION')
 
 def get_github_repo_stars(repo_url):
     if github_key is None:
@@ -131,7 +126,13 @@ def get_repo_user_and_name(module_path):
             branch_command = ['git', 'rev-parse', '--abbrev-ref', 'HEAD']
             branch_result = subprocess.run(branch_command, cwd=module_path, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             main_branch = branch_result.stdout.strip()
-            return username, repo_name, main_branch
+
+            # Get the latest commit hash
+            commit_command = ['git', 'rev-parse', 'HEAD']
+            commit_result = subprocess.run(commit_command, cwd=module_path, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            latest_commit = commit_result.stdout.strip()
+
+            return username, repo_name, main_branch, latest_commit
         else:
             return "Could not parse URL", ""
     except subprocess.CalledProcessError as e:
@@ -139,10 +140,7 @@ def get_repo_user_and_name(module_path):
 
 
 s3_client = boto3.client(
-    's3',
-    aws_access_key_id=aws_access_key_id,
-    aws_secret_access_key=aws_secret_access_key,
-    region_name=aws_region
+    's3'
 )
 def download_and_upload_to_s3(repo_url, webDir, current_path='', file_paths=None):
     """
