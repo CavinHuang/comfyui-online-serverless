@@ -59,7 +59,7 @@ def put_node_ddb(item):
         )
         return item
     except Exception as e:
-        print("❌🔴Error adding package item to DynamoDB:", e)
+        print("🚼Error adding node item to DynamoDB:", e)
         return None
 
 ######v3
