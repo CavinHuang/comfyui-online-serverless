@@ -12,7 +12,7 @@ import json
 # if not aws_access_key_id or not aws_secret_access_key:
 #     print("!!!!Missing AWS credentials")
 #     raise ValueError("Missing AWS credentials")
-
+print("😂 ddbutils222")
 node_table_name = "ComfyNode" + os.environ.get('DDB_TABLE_POSTFIX', "")# DDB_TABLE_CUSTOM_NODE
 package_table_name = "ComfyNodePackage" + os.environ.get('DDB_TABLE_POSTFIX', "")
 
@@ -25,6 +25,7 @@ ddb_package_table = dynamodb.Table(package_table_name)
 
 #####v2######
 def put_node_package_ddb(item):
+    print("put_node_package_ddb", item)
     try:
         repo_data = get_github_repo_stars(item.get('gitHtmlUrl'))
         owner_avatar_url= repo_data['owner_avatar_url'] if 'owner_avatar_url' in repo_data else None
@@ -48,6 +49,7 @@ def put_node_package_ddb(item):
         return None
 
 def put_node_ddb(item):
+    print("put_node_ddb", item)
     # make sure to only create new node if it doesn't exist, to avoid override folderPaths field!
     try:
         response = ddb_node_table.put_item(
@@ -80,6 +82,7 @@ import time
 from  scanner.analyze_node_input import analyze_class
 
 def write_to_db_record(input_dict): 
+    print("✍️🪄write_to_db_record", input_dict)
     # WRITE TO DDB
     NODE_CLASS_MAPPINGS = input_dict['NODE_CLASS_MAPPINGS']
     NODE_DISPLAY_NAME_MAPPINGS = input_dict['NODE_DISPLAY_NAME_MAPPINGS']
