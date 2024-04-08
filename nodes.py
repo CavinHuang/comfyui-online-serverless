@@ -1922,7 +1922,6 @@ def load_custom_node(module_path, ignore=set()):
 
 # save_base_nodes_to_ddb()
 def load_custom_nodes():
-    print('🤔🤔🤔 load cusotm nodes')
     base_node_names = set(NODE_CLASS_MAPPINGS.keys())
     node_paths = folder_paths.get_folder_paths("custom_nodes")
     node_import_times = []
