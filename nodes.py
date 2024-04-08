@@ -1881,7 +1881,6 @@ def load_custom_node(module_path, ignore=set()):
     global cur_node_package
     module_name = os.path.basename(module_path)
     cur_node_package = {}
-    print('🤔🤔🤔 load custom node',module_path, 'module name', module_name)
     if os.path.isfile(module_path):
         sp = os.path.splitext(module_path)
         module_name = sp[0]
@@ -1920,7 +1919,6 @@ def load_custom_node(module_path, ignore=set()):
         cur_node_package['importError'] = error_details
         return False
 
-# save_base_nodes_to_ddb()
 def load_custom_nodes():
     base_node_names = set(NODE_CLASS_MAPPINGS.keys())
     node_paths = folder_paths.get_folder_paths("custom_nodes")
@@ -1935,16 +1933,14 @@ def load_custom_nodes():
             if os.path.isfile(module_path) and os.path.splitext(module_path)[1] != ".py": continue
             if module_path.endswith(".disabled"): continue
             time_before = time.perf_counter()
-            prev_nodes = set(NODE_CLASS_MAPPINGS.keys())
             success = load_custom_node(module_path, base_node_names)
-            print("imported nodes: success",success)
             node_import_times.append((time.perf_counter() - time_before, module_path, success))
             input_dict = {
                 'NODE_CLASS_MAPPINGS': NODE_CLASS_MAPPINGS,
                 'NODE_DISPLAY_NAME_MAPPINGS': NODE_DISPLAY_NAME_MAPPINGS,
                 'cur_node_package': cur_node_package,
                 'module_path': module_path,
-                'prev_nodes': prev_nodes,
+                'prev_nodes': set(NODE_CLASS_MAPPINGS.keys()),
                 'success': success,
                 'time_before': time_before
             }
