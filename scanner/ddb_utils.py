@@ -17,14 +17,15 @@ node_table_name = "ComfyNode" + os.environ.get('DDB_TABLE_POSTFIX', "")# DDB_TAB
 package_table_name = "ComfyNodePackage" + os.environ.get('DDB_TABLE_POSTFIX', "")
 
 # Initialize a DynamoDB client
-dynamodb = boto3.resource(
-    'dynamodb'
-)
-ddb_node_table = dynamodb.Table(node_table_name)
-ddb_package_table = dynamodb.Table(package_table_name)
+# dynamodb = boto3.resource(
+#     'dynamodb'
+# )
+# ddb_node_table = dynamodb.Table(node_table_name)
+# ddb_package_table = dynamodb.Table(package_table_name)
 
 #####v2######
 def put_node_package_ddb(item):
+    return
     print("put_node_package_ddb", item)
     try:
         repo_data = get_github_repo_stars(item.get('gitHtmlUrl'))
@@ -49,6 +50,7 @@ def put_node_package_ddb(item):
         return None
 
 def put_node_ddb(item):
+    return
     print("put_node_ddb", item)
     # make sure to only create new node if it doesn't exist, to avoid override folderPaths field!
     try:
