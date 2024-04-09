@@ -1874,7 +1874,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
 }
 
 EXTENSION_WEB_DIRS = {}
-from scanner.ddb_utils import write_to_db_record
+from scanner.write_to_db_record import write_to_db_record
 
 cur_node_package = {}
 def load_custom_node(module_path, ignore=set()):
@@ -1933,6 +1933,7 @@ def load_custom_nodes():
             if os.path.isfile(module_path) and os.path.splitext(module_path)[1] != ".py": continue
             if module_path.endswith(".disabled"): continue
             time_before = time.perf_counter()
+            prev_nodes = set(NODE_CLASS_MAPPINGS.keys())
             success = load_custom_node(module_path, base_node_names)
             node_import_times.append((time.perf_counter() - time_before, module_path, success))
             input_dict = {
@@ -1940,7 +1941,7 @@ def load_custom_nodes():
                 'NODE_DISPLAY_NAME_MAPPINGS': NODE_DISPLAY_NAME_MAPPINGS,
                 'cur_node_package': cur_node_package,
                 'module_path': module_path,
-                'prev_nodes': set(NODE_CLASS_MAPPINGS.keys()),
+                'prev_nodes': prev_nodes,
                 'success': success,
                 'time_before': time_before
             }

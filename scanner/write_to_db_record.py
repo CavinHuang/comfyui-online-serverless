@@ -1,70 +1,13 @@
-from .githubUtils import download_and_upload_to_s3, get_github_repo_stars
-import datetime
 import os 
-import boto3
-from .githubUtils import get_github_repo_stars
 import json
+import requests
 
-# aws_access_key_id = os.environ.get('AWS_ACCESS_KEY_ID')
-# aws_secret_access_key = os.environ.get('AWS_SECRET_ACCESS_KEY')
-# aws_region = os.environ.get('AWS_REGION')
-
-# if not aws_access_key_id or not aws_secret_access_key:
-#     print("!!!!Missing AWS credentials")
-#     raise ValueError("Missing AWS credentials")
-print("😂 ddbutils222")
-node_table_name = "ComfyNode" + os.environ.get('DDB_TABLE_POSTFIX', "")# DDB_TABLE_CUSTOM_NODE
-package_table_name = "ComfyNodePackage" + os.environ.get('DDB_TABLE_POSTFIX', "")
-
-# Initialize a DynamoDB client
-# dynamodb = boto3.resource(
-#     'dynamodb'
-# )
-# ddb_node_table = dynamodb.Table(node_table_name)
-# ddb_package_table = dynamodb.Table(package_table_name)
-
-#####v2######
 def put_node_package_ddb(item):
-    return
-    print("put_node_package_ddb", item)
-    try:
-        repo_data = get_github_repo_stars(item.get('gitHtmlUrl'))
-        owner_avatar_url= repo_data['owner_avatar_url'] if 'owner_avatar_url' in repo_data else None
-        star_count = repo_data['stars'] if 'stars' in repo_data else None
-        
-        webDir = item.get('webDir')
-        jsFilePaths = None
-        if webDir:
-            jsFilePaths = json.dumps(download_and_upload_to_s3(item['gitRepo'], webDir))
-        response = ddb_package_table.put_item(Item={
-            **item,
-            'updatedAt': datetime.datetime.now().replace(microsecond=0).isoformat(),
-            'totalStars': star_count,
-            'ownerGitAvatarUrl': owner_avatar_url,
-            'description': repo_data.get('description',''),
-            'jsFilePaths': jsFilePaths
-        })
-        return item
-    except Exception as e:
-        print("❌🔴Error adding package item to DynamoDB:", e)
-        return None
+    # requests.post('http://localhost:3000/api/node/putNodePackage', json=item, headers={'Authorization': 'Bearer ' + 'fjireogjjk773727huirngkksuureijfvn'})
+    requests.post('http://localhost:1234/putNodePackage', json=item, headers={'Authorization': 'Bearer ' + 'fjireogjjk773727huirngkksuureijfvn'})
 
 def put_node_ddb(item):
-    return
-    print("put_node_ddb", item)
-    # make sure to only create new node if it doesn't exist, to avoid override folderPaths field!
-    try:
-        response = ddb_node_table.put_item(
-            Item={
-                **item,
-                'updatedAt': datetime.datetime.now().replace(microsecond=0).isoformat(),
-            },
-            ConditionExpression="attribute_not_exists(id)"
-        )
-        return item
-    except Exception as e:
-        print("🚼Error adding node item to DynamoDB:", e)
-        return None
+    requests.post('http://localhost:1234/putNode', json=item, headers={'Authorization': 'Bearer ' + 'fjireogjjk773727huirngkksuureijfvn'})
 
 ######v3
 
@@ -84,7 +27,6 @@ import time
 from  scanner.analyze_node_input import analyze_class
 
 def write_to_db_record(input_dict): 
-    print("✍️🪄write_to_db_record", input_dict)
     # WRITE TO DDB
     NODE_CLASS_MAPPINGS = input_dict['NODE_CLASS_MAPPINGS']
     NODE_DISPLAY_NAME_MAPPINGS = input_dict['NODE_DISPLAY_NAME_MAPPINGS']
@@ -96,6 +38,7 @@ def write_to_db_record(input_dict):
     if 'ComfyUI-Manager' in module_path:
         return
     nodes_count = len(NODE_CLASS_MAPPINGS) - len(prev_nodes)
+    print('🍻 nodes_count',nodes_count)
     import_time = time.perf_counter() - time_before
     
     username, repo_name, default_branch_name, latest_commit = get_repo_user_and_name(module_path)
@@ -131,7 +74,7 @@ def write_to_db_record(input_dict):
         'status': 'IMPORT_'+ ('SUCCESS' if success else 'FAILED'),
         'defaultBranch': default_branch_name,
         'totalNodes':nodes_count,
-        "importTime": Decimal(str(import_time)),
+        "importTime":str(import_time),
         'nodeDefs': json.dumps(custom_node_defs),
         "latestCommit": latest_commit
     })

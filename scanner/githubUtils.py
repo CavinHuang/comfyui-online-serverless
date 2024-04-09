@@ -6,10 +6,6 @@ import shutil
 import boto3
 
 github_key = os.environ.get('GITHUB_API_KEY')
-s3_bucket_name = os.environ.get('S3_BUCKET_NAME')
-aws_access_key_id = os.environ.get('AWS_ACCESS_KEY_ID')
-aws_secret_access_key = os.environ.get('AWS_SECRET_ACCESS_KEY')
-aws_region = os.environ.get('AWS_REGION')
 
 def get_github_repo_stars(repo_url):
     if github_key is None:
