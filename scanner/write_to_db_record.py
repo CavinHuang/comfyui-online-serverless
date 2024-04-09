@@ -3,11 +3,11 @@ import json
 import requests
 
 def put_node_package_ddb(item):
-    # requests.post('http://localhost:3000/api/node/putNodePackage', json=item, headers={'Authorization': 'Bearer ' + 'fjireogjjk773727huirngkksuureijfvn'})
-    requests.post('http://localhost:1234/putNodePackage', json=item, headers={'Authorization': 'Bearer ' + 'fjireogjjk773727huirngkksuureijfvn'})
+    # requests.post('http://localhost:3000/api/node/putNodePackage', json=item, headers={'Authorization': 'Bearer ' + 'token'})
+    requests.post('http://localhost:1234/putNodePackage', json=item)
 
 def put_node_ddb(item):
-    requests.post('http://localhost:1234/putNode', json=item, headers={'Authorization': 'Bearer ' + 'fjireogjjk773727huirngkksuureijfvn'})
+    requests.post('http://localhost:1234/putNode', json=item)
 
 ######v3
 

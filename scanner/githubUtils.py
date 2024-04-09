@@ -3,7 +3,6 @@ import subprocess
 import requests
 import os
 import shutil
-import boto3
 
 github_key = os.environ.get('GITHUB_API_KEY')
 
@@ -133,63 +132,3 @@ def get_repo_user_and_name(module_path):
             return "Could not parse URL", ""
     except subprocess.CalledProcessError as e:
         return f"Error: {e.stderr}", ""
-
-
-s3_client = boto3.client(
-    's3'
-)
-def download_and_upload_to_s3(repo_url, webDir, current_path='', file_paths=None):
-    """
-    Recursively downloads contents from a specified directory in a GitHub repo and uploads them to S3,
-    maintaining the directory structure. Collects paths of all files processed.
-    
-    :param repo_url: URL to the GitHub repository
-    :param webDir: Path to the directory in the repository from which to start the download
-    :param current_path: Keeps track of the current path for recursive calls
-    :param file_paths: Accumulator for collecting file paths
-    :return: List of all file paths processed
-    """
-    if file_paths is None:
-        file_paths = []
-    
-    parts = repo_url.split("/")
-    owner, repo = parts[-2], parts[-1]
-
-    headers = {
-        "Authorization": f"token {github_key}",
-        "Accept": "application/vnd.github.v3+json"
-    }
-    api_url = f"https://api.github.com/repos/{owner}/{repo}/contents/{webDir}/{current_path}"
-
-    response = requests.get(api_url, headers=headers)
-    items = response.json()
-
-    if not isinstance(items, list):  # If the response is not a list, it might be an error message
-        print(f"Error fetching {api_url}: {items.get('message', 'Unknown error')}")
-        return file_paths
-
-    for item in items:
-        if item['type'] == 'file':
-            # Download the file content
-            download_response = requests.get(item['download_url'])
-            file_name = os.path.basename(item['path'])
-            s3_key = f"extensions/{owner}_{repo}/{current_path}{file_name}"
-            
-            # Collect file path
-            file_paths.append(f"{current_path}{file_name}")
-            mime_type = guess_mime_type(file_name)
-            print(f"📄 Uploading typ {mime_type}, {file_name} to S3 with key {s3_key}")
-            # Upload to S3
-            s3_client.put_object(Bucket="comfyui-static", Key=s3_key, Body=download_response.content, ContentType=mime_type)
-            print(f"✅ Uploaded {file_name} to S3 with key {s3_key}")
-        elif item['type'] == 'dir':
-            # Recursively process the directory
-            new_path = os.path.join(current_path, os.path.basename(item['path'])) + '/'
-            print(f"📁 Processing directory: {new_path}")
-            download_and_upload_to_s3(repo_url, webDir, new_path, file_paths)
-
-    return file_paths
-
-def guess_mime_type(file_name):
-    mime_type, _ = mimetypes.guess_type(file_name)
-    return mime_type or 'application/octet-stream'
