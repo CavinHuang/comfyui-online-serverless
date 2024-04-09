@@ -1,7 +1,6 @@
 .env*
 *.log
 .DS_Store
-communication_file.txt
 __pycache__/
 *.py[cod]
 /output/
@@ -9,8 +8,7 @@ __pycache__/
 !/input/example.png
 /models/
 /temp/
-/custom_nodes/*
-!custom_nodes/node_scanner/
+/custom_nodes/
 !custom_nodes/example_node.py.example
 extra_model_paths.yaml
 /.vs

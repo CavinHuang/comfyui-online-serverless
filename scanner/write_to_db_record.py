@@ -27,22 +27,20 @@ import time
 from  scanner.analyze_node_input import analyze_class
 
 def write_to_db_record(input_dict): 
-    # WRITE TO DDB
+    time_before = input_dict['time_before']
+    import_time = time.perf_counter() - time_before
     NODE_CLASS_MAPPINGS = input_dict['NODE_CLASS_MAPPINGS']
     NODE_DISPLAY_NAME_MAPPINGS = input_dict['NODE_DISPLAY_NAME_MAPPINGS']
     cur_node_package = input_dict['cur_node_package']
     module_path = input_dict['module_path']
     prev_nodes = input_dict['prev_nodes']
     success = input_dict['success']
-    time_before = input_dict['time_before']
     if 'ComfyUI-Manager' in module_path:
         return
     nodes_count = len(NODE_CLASS_MAPPINGS) - len(prev_nodes)
-    print('🍻 nodes_count',nodes_count)
-    import_time = time.perf_counter() - time_before
     
+    print('🍻 nodes_count',nodes_count, 'cur_node_package',cur_node_package)
     username, repo_name, default_branch_name, latest_commit = get_repo_user_and_name(module_path)
-    print('🍻 cur_node_package',cur_node_package)
     packageID = username + '_' + repo_name
     custom_node_defs = {}
     for name in NODE_CLASS_MAPPINGS:
