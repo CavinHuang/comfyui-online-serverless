@@ -40,6 +40,8 @@ def write_to_db_record(input_dict):
     nodes_count = len(NODE_CLASS_MAPPINGS) - len(prev_nodes)
     
     print('🍻 nodes_count',nodes_count, 'cur_node_package',cur_node_package)
+    if not os.path.isdir(module_path):
+        return
     username, repo_name, default_branch_name, latest_commit = get_repo_user_and_name(module_path)
     packageID = username + '_' + repo_name
     custom_node_defs = {}
