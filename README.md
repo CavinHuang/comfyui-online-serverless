@@ -1,6 +1,6 @@
 # Comfyui Serverless - a static comfyui serverless web interface
 
-Live at [comfyui.nodeface.org](https://comfyui.nodecafe.org/)
+Live at [comfyui.nodeface.org](https://comfyui.nodecafe.co/)
 
 ## Credits
 
