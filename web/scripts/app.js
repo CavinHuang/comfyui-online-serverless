@@ -1350,7 +1350,7 @@ export class ComfyApp {
 	/**
 	 * Loads all extensions from the API into the window in parallel
 	 */
-  async #loadExtensions() {
+	async #loadExtensions() {
     const extensions = await api.getExtensions();
     this.logging.addEntry("Comfy.App", "debug", { Extensions: extensions });
 
@@ -1363,7 +1363,7 @@ export class ComfyApp {
     });
 
     await Promise.all(extensionPromises);
-  }
+}
 
 	async #migrateSettings() {
 		this.isNewUserSession = true;
@@ -1515,7 +1515,7 @@ export class ComfyApp {
 	async registerNodes() {
 		const app = this;
 		// Load node definitions from the backend
-		const defs = this.nodeDefs;
+    const defs = await api.getNodeDefs();
 		await this.registerNodesFromDefs(defs);
 		await this.#invokeExtensionsAsync("registerCustomNodes");
 	}
