@@ -40,7 +40,9 @@ export class ComfyViewNodePackageApp extends ComfyApp {
   pacakgeID = null;
   nodeType= null;
   extensionFilesPath =  COMFYUI_CORE_EXTENSIONS;
+  nodeDefs = {};
   canvasHeightRequired = 500;
+
   constructor() {
     super();
     const params = new URLSearchParams(window.location.search);
@@ -108,7 +110,19 @@ export class ComfyViewNodePackageApp extends ComfyApp {
   async loadPackageExtensions() {
     const jsFilePaths = JSON.parse(this.nodePackage?.jsFilePaths || "[]");
     this.extensionFilesPath = this.extensionFilesPath.concat(jsFilePaths.map(ext=>"/extensions/"+this.pacakgeID+"/"+ext));
-}
+  }
+
+  async registerNodes() {
+		const app = this;
+		// Load node definitions from the backend
+		const defs = this.nodeDefs;
+    await this.registerNodesFromDefs(defs);
+		super.registerNodes(defs);
+	}
+
+  showMissingNodesError(missingNodeTypes, hasAddedNodes = true) {
+    return;
+  }
   async addNodesToGraph() {
     window.addEventListener('message', function(event) {
       // Check the message received

@@ -29,10 +29,6 @@ function sanitizeNodeName(string) {
  */
 
 export class ComfyApp {
-  /** comfyspace cloud @type {string[]} */
-  extensionFilesPath = [];
-  /** comfyspace cloud @type {string[]} */
-  nodeDefs = {};
 	/**
 	 * List of entries to queue
 	 * @type {{number: number, batchCount: number}[]}
@@ -1354,20 +1350,20 @@ export class ComfyApp {
 	/**
 	 * Loads all extensions from the API into the window in parallel
 	 */
-	async #loadExtensions() {
-	    // const extensions = await api.getExtensions();
-	    // this.logging.addEntry("Comfy.App", "debug", { Extensions: extensions });
-	
-	    const extensionPromises = this.extensionFilesPath.map(async ext => {
-	        try {
-	            await import(api.apiURL(ext));
-	        } catch (error) {
-	            console.error("Error loading extension", ext, error);
-	        }
-	    });
-	
-	    await Promise.all(extensionPromises);
-	}
+  async #loadExtensions() {
+    const extensions = await api.getExtensions();
+    this.logging.addEntry("Comfy.App", "debug", { Extensions: extensions });
+
+    const extensionPromises = extensions.map(async ext => {
+        try {
+            await import(api.apiURL(ext));
+        } catch (error) {
+            console.error("Error loading extension", ext, error);
+        }
+    });
+
+    await Promise.all(extensionPromises);
+  }
 
 	async #migrateSettings() {
 		this.isNewUserSession = true;
@@ -1662,7 +1658,6 @@ export class ComfyApp {
 	}
 
 	showMissingNodesError(missingNodeTypes, hasAddedNodes = true) {
-    return;
 		let seenTypes = new Set();
 
 		this.ui.dialog.show(

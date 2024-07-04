@@ -70,4 +70,8 @@ export class ComfyViewWorkflowApp extends ComfyApp {
     await super.setup();
     await this.loadGraphData(this.#workflow);
   }
+
+  showMissingNodesError(missingNodeTypes, hasAddedNodes = true) {
+    return;
+  }
 }
