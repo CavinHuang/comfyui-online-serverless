@@ -353,6 +353,7 @@ class ComfyApi extends EventTarget {
 	 * @returns { Promise<string, unknown> } A dictionary of id -> value
 	 */
 	async getSettings() {
+    return {};
 		return (await this.fetchApi("/settings")).json();
 	}
 

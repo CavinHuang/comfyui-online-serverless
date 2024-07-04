@@ -1,5 +1,7 @@
 
 import { ComfyApp } from "./app.js";
+import { ComfySettingsDialog } from "./ui/settings.js";
+
 const COMFYUI_CORE_EXTENSIONS = [
   // "/extensions/core/clipspace.js",
   "/extensions/core/colorPalette.js",
@@ -23,7 +25,15 @@ const COMFYUI_CORE_EXTENSIONS = [
   "/extensions/core/uploadImage.js",
   "/extensions/core/widgetInputs.js",
   "/extensions/dp.js",
-]
+];
+
+class CustomComfyUI {
+	constructor(app) {
+		this.app = app;
+		this.settings = new ComfySettingsDialog(app);
+  }
+}
+
 export class ComfyViewNodePackageApp extends ComfyApp {
   /** @type {{nodeDefs:string,jsFilePaths:string}} */
   nodePackage = null;
@@ -64,6 +74,7 @@ export class ComfyViewNodePackageApp extends ComfyApp {
   
   }
   async setup() {
+    this.ui = new CustomComfyUI(this);
     // to disable mousewheel zooming
     // LGraphCanvas.prototype.processMouseWheel =()=>{}
     this.setupMouseWheel();

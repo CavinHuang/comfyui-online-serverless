@@ -54,7 +54,7 @@ export class ComfyApp {
 	static clipspace_return_node = null;
 
 	constructor() {
-		this.ui = new ComfyUI(this);
+		// this.ui = new ComfyUI(this);
 		// this.logging = new ComfyLogging(this);
 
 		/**
@@ -1454,7 +1454,7 @@ export class ComfyApp {
 	 */
 	async setup() {
 		// await this.#setUser();
-		// await this.ui.settings.load();
+		await this.ui.settings.load();
 		await this.#loadExtensions();
 
 		// Create and mount the LiteGraph in the DOM
@@ -2239,7 +2239,8 @@ export async function loadModuleBasedOnPath() {
     app = new ComfyViewNodePackageApp();
   } else {
     // For any other path, import app.js and perform setup
-    app = new ComfyApp()
+    const {ComfyEditWorkflowApp} = await import("./comfyspace_editWorkflowApp.js");
+    app = new ComfyEditWorkflowApp()
   }
 }
 

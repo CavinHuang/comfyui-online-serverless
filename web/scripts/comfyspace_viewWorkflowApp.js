@@ -1,5 +1,7 @@
 
 import { ComfyApp } from "./app.js";
+import {serverNodeDefs} from '../../serverNodeDefs.js'
+import { ComfySettingsDialog } from "./ui/settings.js";
 
 const COMFYUI_CORE_EXTENSIONS = [
   // "/extensions/core/clipspace.js",
@@ -25,12 +27,19 @@ const COMFYUI_CORE_EXTENSIONS = [
   "/extensions/core/widgetInputs.js",
   "/extensions/dp.js",
 ]
-
+class CustomComfyUI {
+	constructor(app) {
+		this.app = app;
+		this.settings = new ComfySettingsDialog(app);
+  }
+}
 export class ComfyViewWorkflowApp extends ComfyApp {
   #workflow = null
   
   async setup() {
+    this.ui = new CustomComfyUI(this);
     this.extensionFilesPath = COMFYUI_CORE_EXTENSIONS;
+    this.nodeDefs = serverNodeDefs;
 
     const queryParams = new URLSearchParams(window.location.search);
     const workflowVersionID = queryParams.get('workflowVersionID');
@@ -43,9 +52,15 @@ export class ComfyViewWorkflowApp extends ComfyApp {
         return response.json();
       })
       .then((data) => {
-        console.log("getCloudflowVersion data", data);
         const workflowVer = data.data;
-        this.nodeDefs = JSON.parse(workflowVer.nodeDefs);
+
+        if (workflowVer?.nodeDefs != null) {
+          const defs = JSON.parse(workflowVer.nodeDefs);
+          this.nodeDefs = {
+            ...this.nodeDefs,
+            ...defs,
+          }
+        }
         this.#workflow = JSON.parse(workflowVer.json);
       })
       .catch((error) => {
