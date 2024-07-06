@@ -166,6 +166,7 @@ class ComfyApi extends EventTarget {
 	 * @returns An array of script urls to import
 	 */
 	async getExtensions() {
+    return[];
 		const resp = await this.fetchApi("/extensions", { cache: "no-store" });
 		return await resp.json();
 	}
@@ -328,6 +329,8 @@ class ComfyApi extends EventTarget {
 	 * @returns { Promise<{ storage: "server" | "browser", users?: Promise<string, unknown>, migrated?: boolean }> } 
 	 */
 	async getUserConfig() {
+    localStorage.setItem("Comfy.userId", "default");
+    return { storage: "server", users: {'default':{}} };
 		return (await this.fetchApi("/users")).json();
 	}
 
@@ -351,6 +354,7 @@ class ComfyApi extends EventTarget {
 	 * @returns { Promise<string, unknown> } A dictionary of id -> value
 	 */
 	async getSettings() {
+    return {}
 		return (await this.fetchApi("/settings")).json();
 	}
 
