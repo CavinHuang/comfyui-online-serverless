@@ -479,6 +479,7 @@ class ComfyApi extends EventTarget {
 	}
 }
 
+import { getCurWorkflowID } from "./app.js";
 import { serverNodeDefs } from "/serverNodeDefs.js";
 export class ServerlessComfyApi extends ComfyApi {
 	DEFAULT_MACHINE = "XzJ8p9wqc9vnp3kwt991P";
@@ -587,6 +588,32 @@ export class ServerlessComfyApi extends ComfyApi {
 	async getUserConfig() {
 		localStorage.setItem("Comfy.userId", "default");
 		return { storage: "browser", users: {'default':{}} };
+	}
+	/** @param {string} file    */
+	async storeUserData(file, data, options = { overwrite: true, stringify: true, throwOnError: true }) {
+		console.log('storeuser data',file,'data',data);
+		if(file.startsWith('workflows/')) {
+			// saving workflow
+			console.log('saving workflow app.graph', JSON.parse(data));
+			const graph = app.graph.serialize();
+			const curWorkflowID = getCurWorkflowID();
+			if (!app.graph.extra.workspace_info?.id) {
+				graph.extra.workspace_info = {}
+				graph.extra.workspace_info.id = curWorkflowID;
+			} else if(graph.extra.workspace_info.id !== curWorkflowID) {
+				alert(`❌Error saving workflow: workspace id mismatch!! URL ID [${curWorkflowID}], Graph ID [${graph.extra.workspace_info.id}]`);
+			}
+			const resp = await fetch(`/workflow/updateWorkflow`, {
+				method: "POST",
+				body: JSON.stringify({
+					id: curWorkflowID,
+					updateData: {
+						json: JSON.stringify(graph),
+					}
+				})
+			}).then((res) => res.json());
+			console.log('workflow saved',resp);
+		}
 	}
 }
 

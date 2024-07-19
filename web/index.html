@@ -31,8 +31,10 @@
 			window.app = app;
 			window.graph = app.graph;
 			console.log('app.graph',app.graph)
+			import {ComfyWorkflow} from './scripts/workflows.js'
 			if(workflow && app.graph.extra.workspace_info !== editWorkflowID) {
-				await app.loadGraphData(JSON.parse(workflow.data.json), true, true, workflow.data.name );
+				const fileName = workflow.data.name + '.json';
+				await app.loadGraphData(JSON.parse(workflow.data.json), true, true, new ComfyWorkflow(app.workflowManager, fileName, [fileName]) );
 			} 
 			// workflow && app.workflowManager.setWorkflow(workflow.data.name);
 

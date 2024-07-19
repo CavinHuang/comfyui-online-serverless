@@ -2475,3 +2475,8 @@ export async function loadModuleBasedOnPath() {
 }
 
 export let app = null;
+
+export function getCurWorkflowID() {
+	const editWorkflowID = new URLSearchParams(window.location.search).get("editWorkflowID");
+	return !!editWorkflowID?.length ? editWorkflowID : null;
+}
