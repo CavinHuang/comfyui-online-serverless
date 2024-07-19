@@ -16,25 +16,22 @@
 			await loadModuleBasedOnPath();
 			const editWorkflowID = getCurWorkflowID();
 			let workflow = null;
+			let graph = null;
 			if(editWorkflowID) {
 				workflow = await fetch('/api/workflow/getWorkflowWithVersion?id='+editWorkflowID).then(res => res.json());
-				console.log('workflow', workflow);
 				if (!workflow?.data?.json) {
 					window.location.href = '/404';
 				}
-				console.log('cur workflow', workflow.data);
-				// if (!api.initialClientId) {
-				// 	sessionStorage.setItem(`workflow:${api.clientId}`)
-				// }
+				graph = JSON.parse(workflow.data.json);
+				graph.extra.workflow_id = editWorkflowID;
 			}
 			await app.setup();
 			window.app = app;
 			window.graph = app.graph;
-			console.log('app.graph',app.graph)
 			import {ComfyWorkflow} from './scripts/workflows.js'
-			if(workflow && app.graph.extra.workspace_info !== editWorkflowID) {
+			if(workflow && app.graph.extra.workflow_id !== editWorkflowID) {
 				const fileName = workflow.data.name + '.json';
-				await app.loadGraphData(JSON.parse(workflow.data.json), true, true, new ComfyWorkflow(app.workflowManager, fileName, [fileName]) );
+				await app.loadGraphData(graph, true, true, new ComfyWorkflow(app.workflowManager, fileName, [fileName]) );
 			} 
 			// workflow && app.workflowManager.setWorkflow(workflow.data.name);
 
