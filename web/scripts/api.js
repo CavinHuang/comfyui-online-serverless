@@ -1,4 +1,4 @@
-export class ComfyApi extends EventTarget {
+class ComfyApi extends EventTarget {
 	#registered = new Set();
 
 	constructor() {
@@ -48,7 +48,6 @@ export class ComfyApi extends EventTarget {
 	 * @param {boolean} isReconnect If the socket is connection is a reconnect attempt
 	 */
 	#createSocket(isReconnect) {
-    return;
 		if (this.socket) {
 			return;
 		}
@@ -169,32 +168,8 @@ export class ComfyApi extends EventTarget {
 	 * @returns An array of script urls to import
 	 */
 	async getExtensions() {
-    const COMFYUI_CORE_EXTENSIONS = [
-      "/extensions/core/clipspace.js",
-      "/extensions/core/colorPalette.js",
-      "/extensions/core/contextMenuFilter.js",
-      "/extensions/core/dynamicPrompts.js",
-      "/extensions/core/editAttention.js",
-      "/extensions/core/groupNode.js",
-      "/extensions/core/groupNodeManage.js",
-      "/extensions/core/groupOptions.js",
-      "/extensions/core/invertMenuScrolling.js",
-      "/extensions/core/keybinds.js",
-      "/extensions/core/linkRenderMode.js",
-      "/extensions/core/maskeditor.js",
-      "/extensions/core/nodeTemplates.js",
-      "/extensions/core/noteNode.js",
-      "/extensions/core/rerouteNode.js",
-      "/extensions/core/saveImageExtraOutput.js",
-      '/extensions/core/simpleTouchSupport.js',
-      "/extensions/core/slotDefaults.js",
-      "/extensions/core/snapToGrid.js",
-      "/extensions/core/uploadImage.js",
-      "/extensions/core/widgetInputs.js",
-    ]
-		// const resp = await this.fetchApi("/extensions", { cache: "no-store" });
-		// return await resp.json();
-    return COMFYUI_CORE_EXTENSIONS
+		const resp = await this.fetchApi("/extensions", { cache: "no-store" });
+		return await resp.json();
 	}
 
 	/**
@@ -355,8 +330,7 @@ export class ComfyApi extends EventTarget {
 	 * @returns { Promise<{ storage: "server" | "browser", users?: Promise<string, unknown>, migrated?: boolean }> }
 	 */
 	async getUserConfig() {
-    localStorage.setItem("Comfy.userId", "default");
-    return { storage: "browser", users: {'default':{}} };
+		return (await this.fetchApi("/users")).json();
 	}
 
 	/**
@@ -609,6 +583,10 @@ export class ServerlessComfyApi extends ComfyApi {
 			// const resp = await this.fetchApi("/extensions", { cache: "no-store" });
 			// return await resp.json();
 		return COMFYUI_CORE_EXTENSIONS
+	}
+	async getUserConfig() {
+		localStorage.setItem("Comfy.userId", "default");
+		return { storage: "browser", users: {'default':{}} };
 	}
 }
 
