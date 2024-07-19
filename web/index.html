@@ -11,11 +11,32 @@
 		<script type="text/javascript" src="./lib/litegraph.core.js"></script>
 		<script type="text/javascript" src="./lib/litegraph.extensions.js" defer></script>
 		<script type="module">
-			import { app, loadModuleBasedOnPath } from "./scripts/app.js";
+			import { app, loadModuleBasedOnPath,getCurWorkflowID } from "./scripts/app.js";
+			import { api } from "./scripts/api.js";
 			await loadModuleBasedOnPath();
+			const editWorkflowID = getCurWorkflowID();
+			let workflow = null;
+			if(editWorkflowID) {
+				workflow = await fetch('/api/workflow/getWorkflowWithVersion?id='+editWorkflowID).then(res => res.json());
+				console.log('workflow', workflow);
+				if (!workflow?.data?.json) {
+					window.location.href = '/404';
+				}
+				console.log('cur workflow', workflow.data);
+				// if (!api.initialClientId) {
+				// 	sessionStorage.setItem(`workflow:${api.clientId}`)
+				// }
+			}
 			await app.setup();
 			window.app = app;
 			window.graph = app.graph;
+			console.log('app.graph',app.graph)
+			if(workflow && app.graph.extra.workspace_info !== editWorkflowID) {
+				await app.loadGraphData(JSON.parse(workflow.data.json), true, true, workflow.data.name );
+			} 
+			// workflow && app.workflowManager.setWorkflow(workflow.data.name);
+
+
 		</script>
 	</head>
 	<body class="litegraph">
