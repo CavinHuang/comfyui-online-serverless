@@ -480,7 +480,6 @@ class ComfyApi extends EventTarget {
 }
 
 import { app, getCurWorkflowID } from "./app.js";
-import { serverNodeDefs } from "/serverNodeDefs.js";
 import {ComfyButton} from './ui/components/button.js';
 export class ServerlessComfyApi extends ComfyApi {
 	DEFAULT_MACHINE = "XzJ8p9wqc9vnp3kwt991P";
@@ -498,12 +497,12 @@ export class ServerlessComfyApi extends ComfyApi {
 			});
 		}
 		const bt = new ComfyButton({
-			content:   "machine_name" ?? '❓Select Machine',
+			content: this.machine?.name ?? '❓Select Machine',
 			icon: "chevron-down",
 		});
 		bt.contentElement.style.display = "block";
 		app.menu.settingsGroup.append(bt)
-		return serverNodeDefs;
+		return JSON.parse(this.machine.object_info) ?? {};
 	}
 	async getUserConfig() {
 		localStorage.setItem("Comfy.userId", "default");
@@ -706,3 +705,19 @@ export const modelFileExtensions = [
 export const imageFileExtensions = [".jpeg", ".jpg", ".png", ".gif", ".webp"];
 
 export let api = new ServerlessComfyApi();
+
+window.addEventListener("message", (event) => {
+	if (event.data.type === "editor_selected_model") {
+		const node  = app.graph.getNodeById(event.data.data.nodeID);
+		const modelName = event.data.data.model.name;
+		const widget = node.widgets.find((w) => w.name === event.data.data.inputName);
+		widget.value = modelName;
+		if(!app.graph.extra.deps) {
+			app.graph.extra.deps = {};
+		}
+		if(!app.graph.extra.deps.models) {
+			app.graph.extra.deps.models = {};
+		}
+		app.graph.extra.deps.models[modelName] = event.data.data.model.url;
+	}
+  });

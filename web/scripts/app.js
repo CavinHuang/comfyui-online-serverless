@@ -2458,7 +2458,6 @@ export class ComfyApp {
 
 
 export async function loadModuleBasedOnPath() {
-  console.log('Loading module based on path');
   const queryParams = new URLSearchParams(window.location.search);
   const workflowVersionID = queryParams.get('workflowVersionID');
   const packageID = queryParams.get('packageID');
@@ -2474,6 +2473,7 @@ export async function loadModuleBasedOnPath() {
   }
 }
 
+/** @type {ComfyApp} */
 export let app = null;
 
 export function getCurWorkflowID() {
