@@ -361,7 +361,9 @@ export const ComfyWidgets = {
 	},
 	COMBO(node, inputName, inputData) {
 		const type = inputData[0];
+		
 		let defaultValue = type[0];
+		console.log('combotype',type, 'defaultValue', type[0])
 		if (inputData[1] && inputData[1].default) {
 			defaultValue = inputData[1].default;
 		}
