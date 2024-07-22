@@ -479,8 +479,9 @@ class ComfyApi extends EventTarget {
 	}
 }
 
-import { app, getCurWorkflowID } from "./app.js";
+import { app, getCurWorkflowID, setCurWorkflowID } from "./app.js";
 import {ComfyButton} from './ui/components/button.js';
+import { ComfyWorkflow } from "./workflows.js";
 export class ServerlessComfyApi extends ComfyApi {
 	DEFAULT_MACHINE = "XzJ8p9wqc9vnp3kwt991P";
 	machine = null;
@@ -511,12 +512,13 @@ export class ServerlessComfyApi extends ComfyApi {
 		return (await this.fetchApi("/users")).json();
 	}
 
-	async validateRunnable(output, workflow) {
+	validateRunnable(output, workflow) {
 		// validate workflow prompt deps first
 		const deps = workflow.extra.deps;
+		const res = {}
 		for (const nodeID of Object.keys(output)) {
 			const node = output[nodeID];
-			console.log('promptNode',nodeID, node);
+			
 			if (node.inputs) {
 				Object.keys(node.inputs).forEach((inputName) => {
 					const value = node.inputs?.[inputName];
@@ -524,19 +526,19 @@ export class ServerlessComfyApi extends ComfyApi {
 					// Check if it's a model file
 					if (modelFileExtensions.some((ext) => value.endsWith(ext))) {
 						if (!deps?.models?.[value]?.url || !deps?.models?.[value]?.folder) {
-							return { error: `Model file ${value} not found in deps` };
+							res.error = `Model file ${value} not found in deps`;
 						}
 					}
 					// Check if it's an image file
 					if (imageFileExtensions.some((ext) => value.endsWith(ext))) {
 						if (!deps?.images?.[value]?.url ) {
-							return { error: `Image file ${value} not found in deps` };
+							res.error = `Image file ${value} not found in deps`;
 						}
 					}
 				});
 			}
 		}
-		return { error: null };
+		return res;
 	}
 	apiURL(route) {
 		
@@ -564,11 +566,12 @@ export class ServerlessComfyApi extends ComfyApi {
 		if(!this.machine) {
 			throw new Error("Please select a machine to run on!");
 		}
-		// const {error} = this.validateRunnable(output, workflow);
-		// if (error) {
-		// 	alert(error);
-		// 	return;
-		// }
+		const validRes = this.validateRunnable(output, workflow);
+		console.log('validate error', validRes)
+		if (validRes.error) {
+			alert(validRes.error);
+			return;
+		}
 		const deps = {...workflow.extra.deps, machine: {
 			id: this.machine.id,
 			snapshot: JSON.parse(this.machine.snapshot),
@@ -587,7 +590,11 @@ export class ServerlessComfyApi extends ComfyApi {
 				rp_endpoint_id: this.machine.rp_endpoint_id,
 			}),
 		}).then((res) => res.json());
-		if(!res.data.id) {
+		console.log('run res', res);
+		if (res.error) {
+			throw new Error(res.error);
+		}
+		if(!res.data?.id) {
 			throw new Error("Error running workflow. Please try again");
 		}
 		window.open('/job/'+ res.data.id);
@@ -666,12 +673,34 @@ export class ServerlessComfyApi extends ComfyApi {
 	}
 	/** @param {string} file    */
 	async storeUserData(file, data, options = { overwrite: true, stringify: true, throwOnError: true }) {
-		console.log('storeuser data',file,'data',data);
 		if(file.startsWith('workflows/')) {
 			// saving workflow
 			console.log('saving workflow app.graph', JSON.parse(data));
 			const graph = app.graph.serialize();
-			const curWorkflowID = getCurWorkflowID();
+			let curWorkflowID = getCurWorkflowID();
+			if (!curWorkflowID) {
+				// create workflow
+				const filename = file.match(/(?<=workflows\/)[^/]+(?=\.json)/);
+				const resp = await fetch(`/api/workflow/createWorkflow`, {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({
+						name: filename,
+						json: JSON.stringify(graph),
+					})
+				}).then((res) => res.json());
+				if(resp.error || !resp.data.id) {
+					alert(`❌Error saving workflow: ${resp.error}`);
+					return;
+				}
+				setCurWorkflowID(resp.data.id);
+				graph.extra.workflow_id = resp.data.id;
+				const comfyworkflow = new ComfyWorkflow(app.workflowManager, filename+'.json', [filename+'.json']);
+				app.workflowManager.setWorkflow(comfyworkflow)
+				return;
+			} 
 			if (!app.graph.extra.workflow_id) {
 				graph.extra.workflow_id = curWorkflowID;
 			} else if(graph.extra.workflow_id !== curWorkflowID) {
@@ -711,6 +740,7 @@ window.addEventListener("message", (event) => {
 		const node  = app.graph.getNodeById(event.data.data.nodeID);
 		const modelName = event.data.data.model.name;
 		const widget = node.widgets.find((w) => w.name === event.data.data.inputName);
+		const originalVal = widget.value;
 		widget.value = modelName;
 		if(!app.graph.extra.deps) {
 			app.graph.extra.deps = {};
@@ -718,6 +748,12 @@ window.addEventListener("message", (event) => {
 		if(!app.graph.extra.deps.models) {
 			app.graph.extra.deps.models = {};
 		}
-		app.graph.extra.deps.models[modelName] = event.data.data.model.url;
+		delete app.graph.extra.deps.models[originalVal];
+		app.graph.extra.deps.models[modelName] = {
+			url: event.data.data.model.url,
+			folder: event.data.data.model.folder,
+			hash: event.data.data.model.hash,
+		}
+		
 	}
   });

@@ -17,9 +17,10 @@
 			const editWorkflowID = getCurWorkflowID();
 			let workflow = null;
 			let graph = null;
+			console.log('editWorkflowID', editWorkflowID)
 			if(editWorkflowID) {
 				let machineID = new URLSearchParams(location.search).get("machine");
-				const [machine, workflow] = await Promise.all([
+				const [machine, workflowResp] = await Promise.all([
 					machineID ? fetch("/api/machine/getMachine?id="+ machineID)
 						.then((res) => res.json())
 						.then((data) => {
@@ -27,14 +28,16 @@
 						}) : null,
 					fetch('/api/workflow/getWorkflowWithVersion?id='+editWorkflowID).then(res => res.json())
 				])
-				if (!workflow?.data?.json) {
+				
+				if (!workflowResp?.data?.json) {
 					window.location.href = '/404';
 				}
+				workflow = workflowResp;
 				graph = JSON.parse(workflow.data.json);
 				graph.extra.workflow_id = editWorkflowID;
 				api.machine = machine;
 			}
-			// localStorage.removeItem('workflow')
+			
 			await app.setup();
 			window.app = app;
 			window.graph = app.graph;
@@ -42,6 +45,7 @@
 			import {ComfyWorkflow} from './scripts/workflows.js'
 			if(workflow ) {
 				app.dbWorkflow = workflow;
+				
 				const fileName = workflow.data.name;
 				const comfyworkflow = new ComfyWorkflow(app.workflowManager, fileName, [fileName]);
 				// const cachedWorkflow = JSON.parse(sessionStorage.getItem(`workflow:${api.initialClientId}`));
