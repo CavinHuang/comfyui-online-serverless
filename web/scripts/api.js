@@ -479,40 +479,68 @@ class ComfyApi extends EventTarget {
 	}
 }
 
-import { getCurWorkflowID } from "./app.js";
+import { app, getCurWorkflowID } from "./app.js";
 import { serverNodeDefs } from "/serverNodeDefs.js";
+import {ComfyButton} from './ui/components/button.js';
 export class ServerlessComfyApi extends ComfyApi {
 	DEFAULT_MACHINE = "XzJ8p9wqc9vnp3kwt991P";
 	machine = null;
-	workflow = null
 
 	async getNodeDefs() {
-		const machineID = new URLSearchParams(location.search).get("machine") ?? this.DEFAULT_MACHINE;
-		const workfloID = new URLSearchParams(location.search).get("workflowID");
-
+		let machineID = new URLSearchParams(location.search).get("machine") ?? app.dbWorkflow?.machine_id ?? this.DEFAULT_MACHINE;
 		console.log("💖Machine ID:", machineID);
-
-		return serverNodeDefs;
-		this.machine = await fetch("/api/machine/getMachine?id="+ machineID)
+		if(!this.machine) {
+			this.machine = await fetch("/api/machine/getMachine?id="+ machineID)
 			.then((res) => res.json())
 			.then((data) => {
 				console.log("machine Data:", data);
 				return data.data
 			});
-			if(workfloID) {
-				this.workflow = await fetch("/api/workflow/getWorkflow?id="+ workfloID)
-				.then((res) => res.json())
-				.then((data) => {
-				
-				});
-			}
-		
+		}
+		const bt = new ComfyButton({
+			content:   "machine_name" ?? '❓Select Machine',
+			icon: "chevron-down",
+		});
+		bt.contentElement.style.display = "block";
+		app.menu.settingsGroup.append(bt)
+		return serverNodeDefs;
 	}
 	async getUserConfig() {
 		localStorage.setItem("Comfy.userId", "default");
 		return { storage: "browser", users: {'default':{}} };
 		// return { storage: "browser", users: Promise.resolve({}), migrated: false };
 		return (await this.fetchApi("/users")).json();
+	}
+
+	async validateRunnable(output, workflow) {
+		// validate workflow prompt deps first
+		const deps = workflow.extra.deps;
+		for (const nodeID of Object.keys(output)) {
+			const node = output[nodeID];
+			console.log('promptNode',nodeID, node);
+			if (node.inputs) {
+				Object.keys(node.inputs).forEach((inputName) => {
+					const value = node.inputs?.[inputName];
+					if (typeof value != "string") return;
+					// Check if it's a model file
+					if (modelFileExtensions.some((ext) => value.endsWith(ext))) {
+						if (!deps?.models?.[value]?.url || !deps?.models?.[value]?.folder) {
+							return { error: `Model file ${value} not found in deps` };
+						}
+					}
+					// Check if it's an image file
+					if (imageFileExtensions.some((ext) => value.endsWith(ext))) {
+						if (!deps?.images?.[value]?.url ) {
+							return { error: `Image file ${value} not found in deps` };
+						}
+					}
+				});
+			}
+		}
+		return { error: null };
+	}
+	apiURL(route) {
+		return this.api_base + route;
 	}
 	async queuePrompt(number, { output, workflow }) {
 		console.log('output',output,'workflow',workflow);
@@ -527,8 +555,19 @@ export class ServerlessComfyApi extends ComfyApi {
 		} else if (number != 0) {
 			body.number = number;
 		}
-		// validate workflow prompt deps first
-		const res = await fetch("/runWorkflow", {
+		if(!this.machine) {
+			throw new Error("Please select a machine to run on!");
+		}
+		// const {error} = this.validateRunnable(output, workflow);
+		// if (error) {
+		// 	alert(error);
+		// 	return;
+		// }
+		const deps = {...workflow.extra.deps, machine: {
+			id: this.machine.id,
+			snapshot: JSON.parse(this.machine.snapshot),
+		}};
+		const res = await fetch("/api/workflow/runWorkflow", {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
@@ -536,23 +575,36 @@ export class ServerlessComfyApi extends ComfyApi {
 			body: JSON.stringify({
 				input: {
 					prompt: output,
-					deps: workflow.extra.deps,
-				}
+					deps: deps,
+				},
+				workflowID: getCurWorkflowID(),
+				rp_endpoint_id: this.machine.rp_endpoint_id,
 			}),
-		});
-
-		if (res.status !== 200) {
-			throw {
-				response: await res.json(),
-			};
+		}).then((res) => res.json());
+		if(!res.data.id) {
+			throw new Error("Error running workflow. Please try again");
 		}
-
-		return await res.json();
+		window.open('/job/'+ res.data.id);
 	}
 	generateSimpleUID() {
 		return  Math.random().toString(36).slice(2,10);
 	}
 
+	fetchApi(route, options) {
+		if (route === '/upload/image') {
+			// uploading to server
+			return fetch('/api/image/upload', {
+				method: 'POST',
+				body: options.body,
+			});
+		}
+		return {
+			status: 404,
+			json: () => Promise.resolve({
+				status: 404,
+			}),
+		}
+	}
 	async init() {
 		this.clientId = this.initialClientId ?? this.generateSimpleUID();
 		sessionStorage.setItem("clientId", this.clientId);
@@ -597,14 +649,17 @@ export class ServerlessComfyApi extends ComfyApi {
 			console.log('saving workflow app.graph', JSON.parse(data));
 			const graph = app.graph.serialize();
 			const curWorkflowID = getCurWorkflowID();
-			if (!app.graph.extra.workspace_info?.id) {
-				graph.extra.workspace_info = {}
-				graph.extra.workspace_info.id = curWorkflowID;
-			} else if(graph.extra.workspace_info.id !== curWorkflowID) {
+			if (!app.graph.extra.workflow_id) {
+				graph.extra.workflow_id = curWorkflowID;
+			} else if(graph.extra.workflow_id !== curWorkflowID) {
 				alert(`❌Error saving workflow: workspace id mismatch!! URL ID [${curWorkflowID}], Graph ID [${graph.extra.workspace_info.id}]`);
+				return;
 			}
-			const resp = await fetch(`/workflow/updateWorkflow`, {
+			const resp = await fetch(`/api/workflow/updateWorkflow`, {
 				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
 				body: JSON.stringify({
 					id: curWorkflowID,
 					updateData: {
@@ -617,5 +672,13 @@ export class ServerlessComfyApi extends ComfyApi {
 	}
 }
 
+export const modelFileExtensions = [
+	".ckpt",
+	".pt",
+	".bin",
+	".pth",
+	".safetensors",
+  ];
+export const imageFileExtensions = [".jpeg", ".jpg", ".png", ".gif", ".webp"];
 
 export let api = new ServerlessComfyApi();

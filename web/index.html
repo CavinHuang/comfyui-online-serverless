@@ -18,22 +18,42 @@
 			let workflow = null;
 			let graph = null;
 			if(editWorkflowID) {
-				workflow = await fetch('/api/workflow/getWorkflowWithVersion?id='+editWorkflowID).then(res => res.json());
+				let machineID = new URLSearchParams(location.search).get("machine");
+				const [machine, workflow] = await Promise.all([
+					machineID ? fetch("/api/machine/getMachine?id="+ machineID)
+						.then((res) => res.json())
+						.then((data) => {
+							return data.data
+						}) : null,
+					fetch('/api/workflow/getWorkflowWithVersion?id='+editWorkflowID).then(res => res.json())
+				])
 				if (!workflow?.data?.json) {
 					window.location.href = '/404';
 				}
 				graph = JSON.parse(workflow.data.json);
 				graph.extra.workflow_id = editWorkflowID;
+				api.machine = machine;
 			}
+			// localStorage.removeItem('workflow')
 			await app.setup();
 			window.app = app;
 			window.graph = app.graph;
 			import {ComfyWorkflow} from './scripts/workflows.js'
-			if(workflow && app.graph.extra.workflow_id !== editWorkflowID) {
-				const fileName = workflow.data.name + '.json';
-				await app.loadGraphData(graph, true, true, new ComfyWorkflow(app.workflowManager, fileName, [fileName]) );
+			if(workflow ) {
+				app.dbWorkflow = workflow;
+				const fileName = workflow.data.name;
+				const comfyworkflow = new ComfyWorkflow(app.workflowManager, fileName, [fileName]);
+				// const cachedWorkflow = JSON.parse(sessionStorage.getItem(`workflow:${api.initialClientId}`));
+				if (app.graph.extra.workflow_id !== editWorkflowID) {
+					console.log('loading graph from db value')
+					await app.loadGraphData(graph, true, true,  comfyworkflow);
+				} else {
+					console.log('loadin graph from session storage cache')
+					app.workflowManager.setWorkflow(comfyworkflow);
+				}
+				
 			} 
-			// workflow && app.workflowManager.setWorkflow(workflow.data.name);
+			
 
 
 		</script>
