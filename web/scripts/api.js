@@ -540,6 +540,13 @@ export class ServerlessComfyApi extends ComfyApi {
 		return { error: null };
 	}
 	apiURL(route) {
+		
+		if(route.startsWith('/view?filename=')) {
+			console.log('view route', route);
+			const searchParams = new URLSearchParams(route.split('?')[1]);
+			console.log('filename', searchParams.get('filename'));
+			return app.graph.extra?.deps?.images?.[searchParams.get('filename')];
+		}
 		return this.api_base + route;
 	}
 	async queuePrompt(number, { output, workflow }) {
@@ -596,6 +603,23 @@ export class ServerlessComfyApi extends ComfyApi {
 			return fetch('/api/image/upload', {
 				method: 'POST',
 				body: options.body,
+			}).then(resp=> resp.json()).then(res => {
+				console.log('upload image response', res);
+				const fileName = Object.keys(res)[0];
+				if(!app.graph.extra.deps) {
+					app.graph.extra.deps = {};
+				}
+				if(!app.graph.extra.deps.images) {
+					app.graph.extra.deps.images = {};
+				}
+				app.graph.extra.deps.images[fileName] = res[fileName];
+				return {
+					status: 200,
+					json: () => Promise.resolve({
+						name: fileName,
+					}),
+				}
+
 			});
 		}
 		return {
