@@ -529,13 +529,23 @@ export class ServerlessComfyApi extends ComfyApi {
 					// Check if it's a model file
 					if (modelFileExtensions.some((ext) => value.endsWith(ext))) {
 						if (!deps?.models?.[value]?.url || !deps?.models?.[value]?.folder) {
-							res.error = `Model file ${value} not found in deps`;
+							res[nodeID] = {
+								errors: [{
+									type: "missing_model",
+									message: `Model file ${value} not found, please select a file`,
+								}]
+							}
 						}
 					}
 					// Check if it's an image file
 					if (imageFileExtensions.some((ext) => value.endsWith(ext))) {
 						if (!deps?.images?.[value]?.url ) {
-							res.error = `Image file ${value} not found in deps`;
+							res[nodeID] = {
+								errors: [{
+									type: "missing_image",
+									message: `Image file ${value} not found, please upload image`
+								}]
+							}
 						}
 					}
 				});
@@ -571,9 +581,11 @@ export class ServerlessComfyApi extends ComfyApi {
 		}
 		const validRes = this.validateRunnable(output, workflow);
 		console.log('validate error', validRes)
-		if (validRes.error) {
-			alert(validRes.error);
-			return;
+		if (!!Object.keys(validRes).length) {
+			// alert(validRes.error);
+			return {
+				node_errors: validRes,
+			}
 		}
 		const deps = {...workflow.extra.deps, machine: {
 			id: this.machine.id,
@@ -601,6 +613,9 @@ export class ServerlessComfyApi extends ComfyApi {
 			throw new Error("Error running workflow. Please try again");
 		}
 		window.open('/job/'+ res.data.id);
+		return {
+			node_errors: {},
+		}
 	}
 	generateSimpleUID() {
 		return  Math.random().toString(36).slice(2,10);
