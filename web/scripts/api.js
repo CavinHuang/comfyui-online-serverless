@@ -689,6 +689,7 @@ export class ServerlessComfyApi extends ComfyApi {
 					body: JSON.stringify({
 						name: filename,
 						json: JSON.stringify(graph),
+						machine_id: this.machine.id,
 					})
 				}).then((res) => res.json());
 				if(resp.error || !resp.data.id) {
