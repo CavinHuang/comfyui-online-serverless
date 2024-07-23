@@ -41,7 +41,7 @@
 			await app.setup();
 			window.app = app;
 			window.graph = app.graph;
-			app.menu.updatePosition('top');
+			app.menu?.updatePosition('top');
 			import {ComfyWorkflow} from './scripts/workflows.js'
 			if(workflow ) {
 				app.dbWorkflow = workflow;

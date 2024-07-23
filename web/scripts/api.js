@@ -482,18 +482,21 @@ class ComfyApi extends EventTarget {
 import { app, getCurWorkflowID, setCurWorkflowID } from "./app.js";
 import {ComfyButton} from './ui/components/button.js';
 import { ComfyWorkflow } from "./workflows.js";
+import {serverNodeDefs} from '/serverNodeDefs.js'
 export class ServerlessComfyApi extends ComfyApi {
-	DEFAULT_MACHINE = "XzJ8p9wqc9vnp3kwt991P";
+	// DEFAULT_MACHINE = "XzJ8p9wqc9vnp3kwt991P";
 	machine = null;
 
 	async getNodeDefs() {
-		let machineID = new URLSearchParams(location.search).get("machine") ?? app.dbWorkflow?.machine_id ?? this.DEFAULT_MACHINE;
+		let machineID = new URLSearchParams(location.search).get("machine") ?? app.dbWorkflow?.machine_id;
 		console.log("💖Machine ID:", machineID);
+		if(!machineID) {
+			return serverNodeDefs;
+		}
 		if(!this.machine) {
 			this.machine = await fetch("/api/machine/getMachine?id="+ machineID)
 			.then((res) => res.json())
 			.then((data) => {
-				console.log("machine Data:", data);
 				return data.data
 			});
 		}
@@ -502,8 +505,8 @@ export class ServerlessComfyApi extends ComfyApi {
 			icon: "chevron-down",
 		});
 		bt.contentElement.style.display = "block";
-		app.menu.settingsGroup.append(bt)
-		return JSON.parse(this.machine.object_info) ?? {};
+		app.menu?.settingsGroup?.append(bt)
+		return JSON.parse(this.machine?.object_info) ?? {};
 	}
 	async getUserConfig() {
 		localStorage.setItem("Comfy.userId", "default");
