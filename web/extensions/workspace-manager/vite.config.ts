@@ -5,7 +5,6 @@ import react from "@vitejs/plugin-react";
 export default defineConfig(({ mode }) => ({
   envDir: ".",
   build: {
-    base: '/web/extensions/workspace-manager/dist/',
     watch: {
       include: ["src/**"],
     },

@@ -2467,14 +2467,11 @@ export async function loadModuleBasedOnPath() {
   } else if(packageID !=null) {
     const {ComfyViewNodePackageApp} = await import("./comfyspace_viewNodePackageApp.js");
     app = new ComfyViewNodePackageApp();
-  } else {
-    // For any other path, import app.js and perform setup
-    app = new ComfyApp()
   }
 }
 
 /** @type {ComfyApp} */
-export let app = null;
+export let app = new ComfyApp();
 
 export function getCurWorkflowID() {
 	const editWorkflowID = new URLSearchParams(window.location.search).get("editWorkflowID");

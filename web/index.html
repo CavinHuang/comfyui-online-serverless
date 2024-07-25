@@ -12,8 +12,8 @@
 		<script type="text/javascript" src="./lib/litegraph.extensions.js" defer></script>
 		<script type="module">
 			import { app, loadModuleBasedOnPath,getCurWorkflowID } from "./scripts/app.js";
-			import { api } from "./scripts/api.js";
 			await loadModuleBasedOnPath();
+			import { api } from "./scripts/api.js";
 			const editWorkflowID = getCurWorkflowID();
 			let workflow = null;
 			let graph = null;
@@ -21,11 +21,11 @@
 			if(editWorkflowID) {
 				let machineID = new URLSearchParams(location.search).get("machine");
 				const [machine, workflowResp] = await Promise.all([
-					machineID ? fetch("/api/machine/getMachine?id="+ machineID)
+					machineID && fetch("/api/machine/getMachine?id="+ machineID)
 						.then((res) => res.json())
 						.then((data) => {
 							return data.data
-						}) : null,
+						}),
 					fetch('/api/workflow/getWorkflowWithVersion?id='+editWorkflowID).then(res => res.json())
 				])
 				
