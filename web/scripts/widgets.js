@@ -554,7 +554,6 @@ ComfyWidgets.COMBO = (node, inputName, inputData) => {
 	const defaultExtension = defaultValue.split(".").pop();
 	if (modelFileExtensions.includes("."+defaultExtension)) {
 		const modelSelectWideget = node.addWidget("button", "model_selector", "select_model", () => {
-			console.log("click select model");
 			window.parent.postMessage({ type: "editor_select_model", data: {
 				nodeID: node.id,
 				inputName: inputName,

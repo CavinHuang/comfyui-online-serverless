@@ -681,9 +681,7 @@ export class ServerlessComfyApi extends ComfyApi {
 		  "/extensions/core/uploadImage.js",
 		  "/extensions/core/widgetInputs.js",
 		]
-			// const resp = await this.fetchApi("/extensions", { cache: "no-store" });
-			// return await resp.json();
-		return COMFYUI_CORE_EXTENSIONS
+		return [...COMFYUI_CORE_EXTENSIONS,'/extensions/workspace-manager/entry.js'];
 	}
 	async getUserConfig() {
 		localStorage.setItem("Comfy.userId", "default");
