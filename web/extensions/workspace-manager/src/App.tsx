@@ -4,6 +4,7 @@ import WorkflowManagerTopbar from "./workflow-manager/WorkflowManagerTopbar";
 import { useEffect, useState } from "react";
 import { waitForApp } from "./comfyapp";
 import ModelManagerTopbar from "./model-manager/ModelManagerTopbar";
+import { ThemeProvider } from "./components/theme-provider";
 
 function App() {
   console.log("App!!😂");
@@ -23,10 +24,13 @@ function App() {
     return null;
   }
   return (
-    <div className="workspace-manager">
-      {leftMenu && ReactDOM.createPortal(<WorkflowManagerTopbar />, leftMenu)}
-      {middleMenu && ReactDOM.createPortal(<ModelManagerTopbar />, middleMenu)}
-    </div>
+    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+      <div className="workspace-manager">
+        {leftMenu && ReactDOM.createPortal(<WorkflowManagerTopbar />, leftMenu)}
+        {middleMenu &&
+          ReactDOM.createPortal(<ModelManagerTopbar />, middleMenu)}
+      </div>
+    </ThemeProvider>
   );
 }
 

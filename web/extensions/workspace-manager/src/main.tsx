@@ -4,7 +4,7 @@ import ReactDOM from "react-dom/client";
 const topbar = document.createElement("div");
 document.body.append(topbar);
 import App from "./App";
-import { injectCSS } from "./injectCss";
+import { injectCSS } from "./injectCSS";
 
 ReactDOM.createRoot(topbar).render(
   <React.StrictMode>
