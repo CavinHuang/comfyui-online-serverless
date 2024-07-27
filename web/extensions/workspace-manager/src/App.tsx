@@ -28,7 +28,12 @@ function App() {
       <div className="tailwind dark">
         {leftMenu && ReactDOM.createPortal(<WorkflowManagerTopbar />, leftMenu)}
         {middleMenu &&
-          ReactDOM.createPortal(<ModelManagerTopbar />, middleMenu)}
+          ReactDOM.createPortal(
+            <div className="tailwind dark">
+              <ModelManagerTopbar className="tailwind dark" />
+            </div>,
+            middleMenu,
+          )}
       </div>
     </ThemeProvider>
   );

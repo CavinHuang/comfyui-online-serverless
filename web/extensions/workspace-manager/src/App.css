@@ -58,3 +58,18 @@
   @tailwind components;
   @tailwind utilities;
 }
+
+.tailwind h1 {
+  font-size: 2.25rem; /* Adjust the font size */
+  font-weight: bold; /* Set font weight to bold */
+}
+
+.tailwind h2 {
+  font-size: 1.5rem; /* Adjust the font size */
+  font-weight: bold; /* Set font weight to bold */
+}
+
+.tailwind h3 {
+  font-size: 1.15rem; /* Adjust the font size */
+  font-weight: bold; /* Set font weight to bold */
+}
