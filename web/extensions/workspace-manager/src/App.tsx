@@ -4,7 +4,8 @@ import WorkflowManagerTopbar from "./workflow-manager/WorkflowManagerTopbar";
 import { useEffect, useState } from "react";
 import { waitForApp } from "./comfyapp";
 import ModelManagerTopbar from "./model-manager/ModelManagerTopbar";
-import { ThemeProvider } from "./components/theme-provider";
+import "@mantine/core/styles.css";
+import { MantineProvider } from "@mantine/core";
 
 function App() {
   console.log("App!!😂");
@@ -24,13 +25,13 @@ function App() {
     return null;
   }
   return (
-    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+    <MantineProvider>
       <div className="workspace-manager">
         {leftMenu && ReactDOM.createPortal(<WorkflowManagerTopbar />, leftMenu)}
         {middleMenu &&
           ReactDOM.createPortal(<ModelManagerTopbar />, middleMenu)}
       </div>
-    </ThemeProvider>
+    </MantineProvider>
   );
 }
 
