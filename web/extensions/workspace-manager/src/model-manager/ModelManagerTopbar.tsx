@@ -8,16 +8,16 @@ import { IconRefresh } from "@tabler/icons-react";
 export default function ModelManagerTopbar() {
   const [showModelDrawer, setShowModelDrawer] = useState(false);
   return (
-    <div className="tailwind">
+    <div className="tailwind dark">
       {showModelDrawer && (
         <CustomDrawer
           onClose={() => setShowModelDrawer(false)}
-          className="tailwind sm:w-full md:w-1/3"
+          className="sm:w-full md:w-1/3"
         >
           <div className="gap-5">
             <Flex className="gap-5">
               <h2>My Models</h2>
-              <Button variant="outline" size="icon">
+              <Button size="sm">
                 <IconRefresh className="h-4 w-4" />
               </Button>
             </Flex>
@@ -26,7 +26,7 @@ export default function ModelManagerTopbar() {
       )}
 
       <Button
-        className="ml-2 text-red-500"
+        className="ml-2"
         size={"sm"}
         onClick={() => setShowModelDrawer(true)}
       >

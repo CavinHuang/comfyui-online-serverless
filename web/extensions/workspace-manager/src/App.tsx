@@ -25,7 +25,7 @@ function App() {
   }
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-      <div className="workspace-manager">
+      <div className="tailwind dark">
         {leftMenu && ReactDOM.createPortal(<WorkflowManagerTopbar />, leftMenu)}
         {middleMenu &&
           ReactDOM.createPortal(<ModelManagerTopbar />, middleMenu)}
