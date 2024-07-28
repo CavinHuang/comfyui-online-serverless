@@ -26,8 +26,9 @@ export default function CustomDrawer({
           position: "fixed",
           top: 0,
           left: 0,
+          zIndex: 10009,
         }}
-        className={`bg-gray-700 ${className}`}
+        className={`bg-gray-900 ${className}`}
       >
         {children}
       </div>

@@ -5,7 +5,7 @@ const Flex = forwardRef<HTMLDivElement, React.HTMLProps<HTMLDivElement>>(
     return (
       <div
         ref={ref}
-        style={{ display: "flex", flexDirection: "row", ...props.style }}
+        style={{ display: "flex", flexDirection: "column", ...props.style }}
         {...props}
       />
     );

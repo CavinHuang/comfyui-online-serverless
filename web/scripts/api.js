@@ -486,19 +486,20 @@ import {serverNodeDefs} from '/serverNodeDefs.js'
 export class ServerlessComfyApi extends ComfyApi {
 	// DEFAULT_MACHINE = "XzJ8p9wqc9vnp3kwt991P";
 	machine = null;
+	fetchedNodeDefs = false;
 
 	async getNodeDefs() {
+		if(this.fetchedNodeDefs) {
+			return await fetch("/api/workflow/refreshMachineNodeDefs?machineID="+this.machine.id)
+			.then(res => res.json()).then(res => {
+				console.log('refreshed node defs', res);
+				return res;
+			})
+		}
 		let machineID = new URLSearchParams(location.search).get("machine") ?? app.dbWorkflow?.machine_id;
 		console.log("💖Machine ID:", machineID);
 		if(!machineID) {
 			return serverNodeDefs;
-		}
-		if(!this.machine) {
-			this.machine = await fetch("/api/machine/getMachine?id="+ machineID)
-			.then((res) => res.json())
-			.then((data) => {
-				return data.data
-			});
 		}
 		const bt = new ComfyButton({
 			content: this.machine?.name ?? '❓Select Machine',
@@ -506,6 +507,7 @@ export class ServerlessComfyApi extends ComfyApi {
 		});
 		bt.contentElement.style.display = "block";
 		app.menu?.settingsGroup?.append(bt)
+		this.fetchedNodeDefs = true;
 		return JSON.parse(this.machine?.object_info) ?? {};
 	}
 	async getUserConfig() {

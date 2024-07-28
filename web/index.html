@@ -15,28 +15,27 @@
 			await loadModuleBasedOnPath();
 			import { api } from "./scripts/api.js";
 			const editWorkflowID = getCurWorkflowID();
-			let workflow = null;
 			let graph = null;
-			console.log('editWorkflowID', editWorkflowID)
-			if(editWorkflowID) {
-				let machineID = new URLSearchParams(location.search).get("machine");
-				const [machine, workflowResp] = await Promise.all([
-					machineID && fetch("/api/machine/getMachine?id="+ machineID)
-						.then((res) => res.json())
-						.then((data) => {
-							return data.data
-						}),
-					fetch('/api/workflow/getWorkflowWithVersion?id='+editWorkflowID).then(res => res.json())
-				])
-				
-				if (!workflowResp?.data?.json) {
-					window.location.href = '/404';
-				}
-				workflow = workflowResp;
-				graph = JSON.parse(workflow.data.json);
-				graph.extra.workflow_id = editWorkflowID;
-				api.machine = machine;
+			let machineID = new URLSearchParams(location.search).get("machine");
+			const [machine, workflow] = await Promise.all([
+				machineID && fetch("/api/machine/getMachine?id="+ machineID)
+					.then((res) => res.json())
+					.then((data) => {
+						return data.data
+					}),
+				editWorkflowID && fetch('/api/workflow/getWorkflowWithVersion?id='+editWorkflowID).then(res => res.json())
+			])
+			console.log('machine', machine, 'workflow', workflow)
+			
+			if (editWorkflowID && !workflow?.data?.json) {
+				window.location.href = '/404';
 			}
+
+			graph = JSON.parse(workflow?.data?.json ?? '{"extra":{}}');
+			graph.extra.workflow_id = editWorkflowID;
+			api.machine = machine;
+			window.dispatchEvent(new CustomEvent('get_machine_workflow', {detail: {workflow: workflow?.data, machine: machine}}));
+		
 			
 			await app.setup();
 			window.app = app;
