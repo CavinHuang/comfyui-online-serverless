@@ -16,6 +16,10 @@ function App() {
   menuPush?.append(middleMenu);
   const [finishLoading, setFinishLoading] = useState(false);
   useEffect(() => {
+    if (import.meta.env.DEV) {
+      setFinishLoading(true);
+      return;
+    }
     waitForApp().then(() => {
       setFinishLoading(true);
     });

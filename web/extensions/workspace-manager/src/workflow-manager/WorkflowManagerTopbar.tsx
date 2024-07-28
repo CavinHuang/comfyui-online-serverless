@@ -7,7 +7,7 @@ export default function WorkflowManagerTopbar() {
     name: string;
   } | null>(app.workflowManager.activeWorkflow);
   useEffect(() => {
-    app.workflowManager.addEventListener("changeWorkflow", () => {
+    app?.workflowManager?.addEventListener("changeWorkflow", () => {
       setWorkflow(app.workflowManager?.activeWorkflow);
     });
   }, []);
