@@ -7,7 +7,6 @@ import ModelManagerTopbar from "./model-manager/ModelManagerTopbar";
 import { ThemeProvider } from "./components/theme-provider";
 
 function App() {
-  console.log("App!!😂");
   const topMenu = document.getElementsByClassName("comfyui-menu").item(0);
   const leftMenu = document.createElement("div");
   const menuPush = document.getElementsByClassName("comfyui-menu-push").item(0);
