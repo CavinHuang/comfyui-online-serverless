@@ -490,10 +490,12 @@ export class ServerlessComfyApi extends ComfyApi {
 
 	async getNodeDefs() {
 		if(this.fetchedNodeDefs) {
-			return await fetch("/api/workflow/refreshMachineNodeDefs?machineID="+this.machine.id)
+			return await fetch("/api/machine/refreshMachineNodeDefs?machineID="+this.machine.id)
 			.then(res => res.json()).then(res => {
-				console.log('refreshed node defs', res);
-				return res;
+				if (res.data) {
+					return JSON.parse(res.data);
+				}
+				throw new Error("Error fetching node defs");
 			})
 		}
 		let machineID = new URLSearchParams(location.search).get("machine") ?? app.dbWorkflow?.machine_id;

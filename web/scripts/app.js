@@ -2472,6 +2472,7 @@ export async function loadModuleBasedOnPath() {
 
 /** @type {ComfyApp} */
 export let app = new ComfyApp();
+app.menu.actionsGroup.remove(0);
 
 export function getCurWorkflowID() {
 	const editWorkflowID = new URLSearchParams(window.location.search).get("editWorkflowID");

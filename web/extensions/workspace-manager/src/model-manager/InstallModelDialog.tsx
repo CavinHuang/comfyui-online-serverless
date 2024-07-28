@@ -64,6 +64,7 @@ export function InstallModelDialog({ onClose }: { onClose: () => void }) {
             <p className="text-right">File Name</p>
             <Input
               className="col-span-3"
+              placeholder="v1-5-pruned-emaonly.safetensors"
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
@@ -72,6 +73,7 @@ export function InstallModelDialog({ onClose }: { onClose: () => void }) {
             <p className="text-right">Download Url</p>
             <Input
               className="col-span-3"
+              placeholder="https://huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/v1-5-pruned-emaonly.safetensors"
               onChange={(e) => setUrl(e.target.value)}
             />
           </div>
