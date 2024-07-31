@@ -59,7 +59,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
             <Spinner
               size={size === "default" ? "md" : size == "sm" ? "sm" : "lg"}
             />
-            <span>{props.children}</span> {/* Original button label */}
+            <>{props.children}</>
           </div>
         ) : (
           props.children // Render button children when not loading
