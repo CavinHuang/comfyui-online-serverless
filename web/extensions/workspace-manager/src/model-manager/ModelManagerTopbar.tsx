@@ -31,7 +31,12 @@ export default function ModelManagerTopbar({
         isLoading={refreshingNodes}
         onClick={async () => {
           setRefreshingNodes(true);
-          await app.refreshComboInNodes();
+          try {
+            await app.refreshComboInNodes();
+          } catch (err) {
+            alert("Failed to refresh nodes. Please try again.");
+            console.error(err);
+          }
           setRefreshingNodes(false);
         }}
       >

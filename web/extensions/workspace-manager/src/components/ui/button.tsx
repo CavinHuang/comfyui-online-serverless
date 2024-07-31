@@ -57,13 +57,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {isLoading ? (
           <div className="flex items-center space-x-2">
             <Spinner
-              size={
-                size === "default" || size === "icon"
-                  ? "md"
-                  : size == "sm"
-                    ? "sm"
-                    : "lg"
-              }
+              size={size === "default" ? "md" : size == "sm" ? "sm" : "lg"}
             />
             <span>{props.children}</span> {/* Original button label */}
           </div>

@@ -484,19 +484,18 @@ import {ComfyButton} from './ui/components/button.js';
 import { ComfyWorkflow } from "./workflows.js";
 import {serverNodeDefs} from '/serverNodeDefs.js'
 export class ServerlessComfyApi extends ComfyApi {
-	// DEFAULT_MACHINE = "XzJ8p9wqc9vnp3kwt991P";
 	machine = null;
-	fetchedNodeDefs = false;
+	initialLoad = true;
 
 	async getNodeDefs() {
-		if(this.fetchedNodeDefs) {
-			return await fetch("/api/machine/refreshMachineNodeDefs?machineID="+this.machine.id)
-			.then(res => res.json()).then(res => {
-				if (res.data) {
-					return JSON.parse(res.data);
-				}
-				throw new Error("Error fetching node defs");
-			})
+		if(!this.initialLoad) {
+			const res = await fetch("/api/machine/refreshMachineNodeDefs?machineID="+this.machine.id)
+			.then(res => res.json());
+			if (!res) {
+				alert("❌ Error fetching machine nodes");
+				throw new Error("Error fetching machine nodes");
+			}
+			return res;
 		}
 		let machineID = new URLSearchParams(location.search).get("machine") ?? app.dbWorkflow?.machine_id;
 		console.log("💖Machine ID:", machineID);
@@ -509,7 +508,7 @@ export class ServerlessComfyApi extends ComfyApi {
 		});
 		bt.contentElement.style.display = "block";
 		app.menu?.settingsGroup?.append(bt)
-		this.fetchedNodeDefs = true;
+		this.initialLoad = false;
 		return JSON.parse(this.machine?.object_info) ?? {};
 	}
 	async getUserConfig() {
