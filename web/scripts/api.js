@@ -623,6 +623,7 @@ export class ServerlessComfyApi extends ComfyApi {
 		if(!res.data?.id) {
 			throw new Error("Error running workflow. Please try again");
 		}
+		localStorage.setItem("job", JSON.stringify(res.data));
 		window.open('/job/'+ res.data.id);
 		this.dispatchEvent(new CustomEvent("jobQueued", { detail: res.data }));
 		return {
