@@ -9,11 +9,18 @@ import {
 
 export default function JobManagerTopbar() {
   const [queuingPrompt, setQueuingPrompt] = useState(false);
+  const [jobs, setJobs] = useState<
+    { id: string; finished_at: string; status: string }[]
+  >([]);
   useEffect(() => {
     api.addEventListener("promptQueued", () => {
       setQueuingPrompt(false);
     });
+    api.addEventListener("jobQueued", (e: CustomEvent<any>) => {
+      console.log("Job queued", e.detail);
+    });
   }, []);
+  useEffect(() => {}, [jobs]);
   return (
     <Flex>
       <Button className="ml-2 gap-1" size={"sm"}>

@@ -531,7 +531,9 @@ export class ServerlessComfyApi extends ComfyApi {
 					if (typeof value != "string") return;
 					// Check if it's a model file
 					if (modelFileExtensions.some((ext) => value.endsWith(ext))) {
-						if (!deps?.models?.[value]?.url || !deps?.models?.[value]?.folder) {
+						const valueList1 = LiteGraph.registered_node_types[node.class_type].nodeData?.input?.required?.[inputName]?.[0] ?? [];
+						const valueList2 = LiteGraph.registered_node_types[node.class_type].nodeData?.input?.optional?.[inputName]?.[0] ?? [];
+						if (!valueList1.includes(value) || !valueList2.includes(value) || !deps?.models?.[value]?.url || !deps?.models?.[value]?.folder) {
 							res[nodeID] = {
 								errors: [{
 									type: "missing_model",
@@ -567,7 +569,6 @@ export class ServerlessComfyApi extends ComfyApi {
 		return this.api_base + route;
 	}
 	async queuePrompt(number, { output, workflow }) {
-		console.log('output',output,'workflow',workflow);
 		const body = {
 			client_id: this.clientId,
 			prompt: output,
@@ -583,7 +584,6 @@ export class ServerlessComfyApi extends ComfyApi {
 			throw new Error("Please select a machine to run on!");
 		}
 		const validRes = this.validateRunnable(output, workflow);
-		console.log('validate error', validRes)
 		if (!!Object.keys(validRes).length) {
 			// alert(validRes.error);
 			return {
@@ -616,6 +616,7 @@ export class ServerlessComfyApi extends ComfyApi {
 			throw new Error("Error running workflow. Please try again");
 		}
 		window.open('/job/'+ res.data.id);
+		this.dispatchEvent(new CustomEvent("jobQueued", { detail: res.data }));
 		return {
 			node_errors: {},
 		}
