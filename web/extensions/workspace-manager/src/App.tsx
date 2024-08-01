@@ -8,9 +8,14 @@ import { ThemeProvider } from "./components/theme-provider";
 import JobManagerTopbar from "./model-manager/JobManagerTopbar";
 
 function App() {
+  console.log("🦄 workspace manager App");
   const topMenu = document.getElementsByClassName("comfyui-menu").item(0);
+  if (!topMenu) {
+    console.error("🦄❌❌ comfyui-menu not found");
+  }
   const leftMenu = document.createElement("div");
   const menuPush = document.getElementsByClassName("comfyui-menu-push").item(0);
+  console.log("🦄 menuPush", menuPush);
   const middleMenu = document.createElement("div");
   const queueButtonDiv = document
     .getElementsByClassName("comfyui-queue-button")
