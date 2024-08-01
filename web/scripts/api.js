@@ -533,7 +533,10 @@ export class ServerlessComfyApi extends ComfyApi {
 					if (modelFileExtensions.some((ext) => value.endsWith(ext))) {
 						const valueList1 = LiteGraph.registered_node_types[node.class_type].nodeData?.input?.required?.[inputName]?.[0] ?? [];
 						const valueList2 = LiteGraph.registered_node_types[node.class_type].nodeData?.input?.optional?.[inputName]?.[0] ?? [];
-						if (!valueList1.includes(value) || !valueList2.includes(value) || !deps?.models?.[value]?.url || !deps?.models?.[value]?.folder) {
+						if (valueList1.includes(value) || valueList2.includes(value)) {
+							return;
+						}
+						if (!deps?.models?.[value]?.url || !deps?.models?.[value]?.folder) {
 							res[nodeID] = {
 								errors: [{
 									type: "missing_model",
@@ -590,7 +593,12 @@ export class ServerlessComfyApi extends ComfyApi {
 				node_errors: validRes,
 			}
 		}
-		const deps = {...workflow.extra.deps, machine: {
+		const deps = {
+			// temporarily skip model deps for now cuz we do not allow select model now
+			images:{
+				...workflow.extra?.deps?.images
+			}, 
+			machine: {
 			id: this.machine.id,
 			snapshot: JSON.parse(this.machine.snapshot),
 		}};

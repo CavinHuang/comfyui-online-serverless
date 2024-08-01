@@ -7,17 +7,21 @@ import {
   IconTriangleInvertedFilled,
 } from "@tabler/icons-react";
 
+type Job = {
+  id: string;
+  finishedAt: string | null;
+  status: string;
+  duration: number | null;
+};
 export default function JobManagerTopbar() {
   const [queuingPrompt, setQueuingPrompt] = useState(false);
-  const [jobs, setJobs] = useState<
-    { id: string; finished_at: string; status: string }[]
-  >([]);
+  const [jobs, setJobs] = useState<Job[]>([]);
   useEffect(() => {
     api.addEventListener("promptQueued", () => {
       setQueuingPrompt(false);
     });
-    api.addEventListener("jobQueued", (e: CustomEvent<any>) => {
-      console.log("Job queued", e.detail);
+    api.addEventListener("jobQueued", (e: CustomEvent<Job>) => {
+      setJobs((prev) => [...prev, e.detail]);
     });
   }, []);
   useEffect(() => {}, [jobs]);
