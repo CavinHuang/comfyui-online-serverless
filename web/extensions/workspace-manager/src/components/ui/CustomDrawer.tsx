@@ -28,7 +28,7 @@ export default function CustomDrawer({
           left: 0,
           zIndex: 10009,
         }}
-        className={`bg-gray-900 ${className}`}
+        className={`bg-zinc-950 ${className}`}
       >
         {children}
       </div>

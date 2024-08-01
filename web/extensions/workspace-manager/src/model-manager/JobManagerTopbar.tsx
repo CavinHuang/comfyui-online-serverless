@@ -27,10 +27,10 @@ export default function JobManagerTopbar() {
   useEffect(() => {}, [jobs]);
   return (
     <Flex>
-      <Button className="ml-2 gap-1" size={"sm"}>
+      {/* <Button className="ml-2 gap-1" size={"sm"}>
         <span>Jobs</span>
         <IconTriangleInvertedFilled size={10} />
-      </Button>
+      </Button> */}
       <Button
         className="ml-2 gap-1"
         size={"sm"}

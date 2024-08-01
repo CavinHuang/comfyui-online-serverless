@@ -17,18 +17,12 @@ export default function ModelManagerTopbar({
       {showModelDrawer && (
         <ModelManagerDrawer onClose={() => setShowModelDrawer(false)} />
       )}
-
       <Button
-        className="ml-2"
-        size={"sm"}
-        onClick={() => setShowModelDrawer(true)}
-      >
-        Models
-      </Button>
-      <Button
+        variant={"secondary"}
         className="ml-2"
         size={"sm"}
         isLoading={refreshingNodes}
+        title="Refresh widgets in nodes to find new models or files"
         onClick={async () => {
           setRefreshingNodes(true);
           try {
@@ -41,6 +35,13 @@ export default function ModelManagerTopbar({
         }}
       >
         <IconRefresh size={18} />
+      </Button>
+      <Button
+        className="ml-2"
+        size={"sm"}
+        onClick={() => setShowModelDrawer(true)}
+      >
+        Models
       </Button>
     </Flex>
   );
