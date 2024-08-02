@@ -46,9 +46,6 @@ export default function ModelManagerDrawer({
     setRefreshing(false);
     localStorage.setItem(cacheKey, JSON.stringify(tree));
   };
-  if (!api.machine) {
-    return <p>Machine not found</p>;
-  }
 
   return (
     <>

@@ -36,13 +36,17 @@ export default function ModelManagerTopbar({
       >
         <IconRefresh size={18} />
       </Button>
-      <Button
-        className="ml-2"
-        size={"sm"}
-        onClick={() => setShowModelDrawer(true)}
-      >
-        Models
-      </Button>
+      {api.machine?.id ? (
+        <Button
+          className="ml-2"
+          size={"sm"}
+          onClick={() => setShowModelDrawer(true)}
+        >
+          Models
+        </Button>
+      ) : (
+        <p>❓Select Machine</p>
+      )}
     </Flex>
   );
 }

@@ -60,6 +60,7 @@ export class ComfyViewWorkflowApp {
 	static clipspace_return_node = null;
 
 	constructor() {
+		console.log('view workflow app')
 		this.ui = new CustomComfyUI(this);
 		// this.logging = new ComfyLogging(this);
 		// this.workflowManager = new ComfyWorkflowManager(this);
@@ -1738,7 +1739,7 @@ export class ComfyViewWorkflowApp {
 				this.size = s;
 				this.serialize_widgets = true;
 
-				app.#invokeExtensionsAsync("nodeCreated", this);
+				// app.#invokeExtensionsAsync("nodeCreated", this);
 			},
 			{
 				title: nodeData.display_name || nodeData.name,

@@ -2456,6 +2456,8 @@ export class ComfyApp {
 	}
 }
 
+/** @type {ComfyApp} */
+export let app = null;
 
 export async function loadModuleBasedOnPath() {
   const queryParams = new URLSearchParams(window.location.search);
@@ -2467,12 +2469,13 @@ export async function loadModuleBasedOnPath() {
   } else if(packageID !=null) {
     const {ComfyViewNodePackageApp} = await import("./comfyspace_viewNodePackageApp.js");
     app = new ComfyViewNodePackageApp();
+  } else {
+	app = new ComfyApp();
+	app?.menu?.actionsGroup.remove(0);
   }
 }
 
-/** @type {ComfyApp} */
-export let app = new ComfyApp();
-app.menu.actionsGroup.remove(0);
+
 
 export function getCurWorkflowID() {
 	const editWorkflowID = new URLSearchParams(window.location.search).get("editWorkflowID");

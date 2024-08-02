@@ -499,6 +499,9 @@ export class ServerlessComfyApi extends ComfyApi {
 		}
 		
 		this.initialLoad = false;
+		if(!this.machine?.object_info) {
+			return serverNodeDefs;
+		}
 		return JSON.parse(this.machine?.object_info ?? "{}") ?? {};
 	}
 	async getUserConfig() {
