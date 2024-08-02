@@ -6,6 +6,8 @@ import { waitForApp } from "./comfyapp";
 import ModelManagerTopbar from "./model-manager/ModelManagerTopbar";
 import { ThemeProvider } from "./components/theme-provider";
 import JobManagerTopbar from "./model-manager/JobManagerTopbar";
+import { SWRConfig } from "swr";
+import { swrLocalStorageProvider } from "./utils/swrFetcher";
 
 function App() {
   console.log("🦄 workspace manager App");
@@ -25,6 +27,7 @@ function App() {
   menuPush?.append(middleMenu);
   queueButtonDiv?.replaceWith(myQueueButtonDiv);
   const [finishLoading, setFinishLoading] = useState(false);
+
   useEffect(() => {
     if (import.meta.env.DEV) {
       setFinishLoading(true);
@@ -38,25 +41,28 @@ function App() {
     return null;
   }
   return (
-    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-      <div className="tailwind dark">
-        {leftMenu && ReactDOM.createPortal(<WorkflowManagerTopbar />, leftMenu)}
-        {middleMenu &&
-          ReactDOM.createPortal(
-            <div className="tailwind dark">
-              <ModelManagerTopbar className="tailwind dark" />
-            </div>,
-            middleMenu,
-          )}
-        {myQueueButtonDiv &&
-          ReactDOM.createPortal(
-            <div className="tailwind dark">
-              <JobManagerTopbar />
-            </div>,
-            myQueueButtonDiv,
-          )}
-      </div>
-    </ThemeProvider>
+    <SWRConfig value={{ provider: swrLocalStorageProvider }}>
+      <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+        <div className="tailwind dark">
+          {leftMenu &&
+            ReactDOM.createPortal(<WorkflowManagerTopbar />, leftMenu)}
+          {middleMenu &&
+            ReactDOM.createPortal(
+              <div className="tailwind dark">
+                <ModelManagerTopbar className="tailwind dark" />
+              </div>,
+              middleMenu,
+            )}
+          {myQueueButtonDiv &&
+            ReactDOM.createPortal(
+              <div className="tailwind dark">
+                <JobManagerTopbar />
+              </div>,
+              myQueueButtonDiv,
+            )}
+        </div>
+      </ThemeProvider>
+    </SWRConfig>
   );
 }
 

@@ -16,20 +16,20 @@ export default function ModelManagerDrawer({
 }) {
   const [refreshing, setRefreshing] = useState(false);
   const [openInstallModel, setOpenInstallModel] = useState(false);
+  const cacheKey = "machine_models_tree##" + api.machine?.id;
 
-  const getTreeFromSnapshot = () => {
-    const snapshot = JSON.parse(api.machine?.snapshot ?? "{}");
-    const converted = convertToTree(snapshot.models ?? {});
-    console.log("converted", converted);
-    return converted;
-  };
-
-  const [models, setModels] = useState<FileNode[]>(() => getTreeFromSnapshot());
-  useEffect(() => {
-    window.addEventListener("get_machine_workflow", (e: any) => {
-      setModels(getTreeFromSnapshot());
-    });
-  }, []);
+  const [models, setModels] = useState<FileNode[]>(() => {
+    const cache = localStorage.getItem(cacheKey);
+    if (cache) {
+      return JSON.parse(cache);
+    }
+    return [];
+  });
+  // useEffect(() => {
+  //   window.addEventListener("get_machine_workflow", (e: any) => {
+  //     setModels(getTreeFromSnapshot());
+  //   });
+  // }, []);
   const onRefresh = async () => {
     setRefreshing(true);
     console.log(api.machine);
@@ -44,7 +44,12 @@ export default function ModelManagerDrawer({
     console.log("tree", tree);
     setModels(tree);
     setRefreshing(false);
+    localStorage.setItem(cacheKey, JSON.stringify(tree));
   };
+  if (!api.machine) {
+    return <p>Machine not found</p>;
+  }
+
   return (
     <>
       <CustomDrawer onClose={onClose} className="w-full md:!w-[500px]">

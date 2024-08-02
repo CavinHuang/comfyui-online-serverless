@@ -497,19 +497,9 @@ export class ServerlessComfyApi extends ComfyApi {
 			}
 			return res;
 		}
-		let machineID = new URLSearchParams(location.search).get("machine") ?? app.dbWorkflow?.machine_id;
-		console.log("💖Machine ID:", machineID);
-		if(!machineID) {
-			return serverNodeDefs;
-		}
-		const bt = new ComfyButton({
-			content: this.machine?.name ?? '❓Select Machine',
-			icon: "chevron-down",
-		});
-		bt.contentElement.style.display = "block";
-		app.menu?.settingsGroup?.append(bt)
+		
 		this.initialLoad = false;
-		return JSON.parse(this.machine?.object_info) ?? {};
+		return JSON.parse(this.machine?.object_info ?? "{}") ?? {};
 	}
 	async getUserConfig() {
 		localStorage.setItem("Comfy.userId", "default");
