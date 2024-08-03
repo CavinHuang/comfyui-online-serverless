@@ -57,9 +57,9 @@ export default function ModelManagerDrawer({
               <Button size="sm" onClick={onRefresh} isLoading={refreshing}>
                 <IconRefresh className="h-4 w-4" />
               </Button>
-              <Button onClick={() => setOpenInstallModel(true)}>
+              {/* <Button onClick={() => setOpenInstallModel(true)}>
                 Install Model
-              </Button>
+              </Button> */}
             </Flex>
             <Button variant={"ghost"} onClick={onClose}>
               <IconX className="h-4 w-4" />

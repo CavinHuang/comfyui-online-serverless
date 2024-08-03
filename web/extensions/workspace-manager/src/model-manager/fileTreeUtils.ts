@@ -26,6 +26,9 @@ export const convertToTree = (
   const root: Record<string, any> = {};
 
   Object.entries(data).forEach(([path, { sizeB }]) => {
+    if (path.endsWith(".path.ckpt")) {
+      return;
+    }
     const parts = path.split("/");
     let currentLevel = root;
 
