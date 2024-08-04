@@ -25,7 +25,7 @@ function waitForElement(selector) {
   });
 }
 
-// wait for graph-canvas element to load so that the top menu is loaded and my react component has place to mount to
-waitForElement("#graph-canvas").then(() => {
+// wait for graph-canvas element to load so that the top menu is loaded and my react component has place to mount
+waitForElement(".comfyui-queue-button").then(() => {
   import(api.api_base + "/extensions/workspace-manager/dist/input.js");
 });

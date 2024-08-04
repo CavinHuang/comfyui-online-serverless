@@ -592,9 +592,9 @@ export class ServerlessComfyApi extends ComfyApi {
 				...workflow.extra?.deps?.images
 			}, 
 			machine: {
-			id: this.machine.id,
-			snapshot: JSON.parse(this.machine.snapshot),
-		}};
+				id: this.machine.id,
+				snapshot: JSON.parse(this.machine.snapshot),
+			}};
 		const res = await fetch("/api/workflow/runWorkflow", {
 			method: "POST",
 			headers: {
