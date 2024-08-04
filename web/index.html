@@ -46,7 +46,7 @@
 			app.menu?.updatePosition('top');
 			import {ComfyWorkflow} from './scripts/workflows.js'
 			if(workflow ) {
-				app.dbWorkflow = workflow;
+				app.dbWorkflow = workflow.data;
 				
 				const fileName = workflow.data.name;
 				const comfyworkflow = new ComfyWorkflow(app.workflowManager, fileName, [fileName]);

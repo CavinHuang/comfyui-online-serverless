@@ -2,8 +2,10 @@ import { useState } from "react";
 import { api, app } from "../comfyapp";
 import { Button } from "@/components/ui/button";
 import Flex from "@/components/ui/Flex";
-import { IconRefresh } from "@tabler/icons-react";
+import { IconRefresh, IconTriangleInvertedFilled } from "@tabler/icons-react";
 import ModelManagerDrawer from "./ModelManagerDrawer";
+import { TOP_BAR_BUTTON_HEIGHT } from "@/constants";
+import { HardDrive } from "lucide-react";
 
 export default function ModelManagerTopbar({
   className,
@@ -37,13 +39,25 @@ export default function ModelManagerTopbar({
         <IconRefresh size={18} />
       </Button>
       {api.machine?.id ? (
-        <Button
-          className="ml-2"
-          size={"sm"}
-          onClick={() => setShowModelDrawer(true)}
-        >
-          Models
-        </Button>
+        <>
+          <Button
+            className={`ml-2 h-[${TOP_BAR_BUTTON_HEIGHT}]`}
+            size={"sm"}
+            onClick={() => setShowModelDrawer(true)}
+          >
+            Models
+          </Button>
+          <Button
+            variant={"outline"}
+            size={"sm"}
+            className={`ml-4 h-[${TOP_BAR_BUTTON_HEIGHT}]`}
+            style={{ backgroundColor: "#2F343F" }}
+          >
+            <HardDrive size={"16"} />
+            <span className="ml-2"> {api.machine?.name}</span>
+            <IconTriangleInvertedFilled size={10} className="ml-2" />
+          </Button>
+        </>
       ) : (
         <p>❓Select Machine</p>
       )}

@@ -1,13 +1,15 @@
 import ReactDOM from "react-dom";
 import "./App.css";
 import WorkflowManagerTopbar from "./workflow-manager/WorkflowManagerTopbar";
-import { useEffect, useState } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import { waitForApp } from "./comfyapp";
-import ModelManagerTopbar from "./model-manager/ModelManagerTopbar";
 import { ThemeProvider } from "./components/theme-provider";
 import JobManagerTopbar from "./model-manager/JobManagerTopbar";
 import { SWRConfig } from "swr";
 import { swrLocalStorageProvider } from "./utils/swrFetcher";
+const ModelManagerTopbar = lazy(
+  () => import("./model-manager/ModelManagerTopbar"),
+);
 
 function App() {
   console.log("🦄 workspace manager App");
@@ -49,7 +51,9 @@ function App() {
           {middleMenu &&
             ReactDOM.createPortal(
               <div className="tailwind dark">
-                <ModelManagerTopbar className="tailwind dark" />
+                <Suspense fallback={null}>
+                  <ModelManagerTopbar className="tailwind dark" />
+                </Suspense>
               </div>,
               middleMenu,
             )}

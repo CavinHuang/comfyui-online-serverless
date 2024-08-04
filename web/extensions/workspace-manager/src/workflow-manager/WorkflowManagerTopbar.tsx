@@ -1,11 +1,7 @@
 import { useEffect, useState } from "react";
 import { app } from "../comfyapp";
 import { Button } from "@/components/ui/button";
-import {
-  IconFolder,
-  IconRocket,
-  IconTriangleInvertedFilled,
-} from "@tabler/icons-react";
+import { IconFolder, IconTriangleInvertedFilled } from "@tabler/icons-react";
 import Flex from "@/components/ui/Flex";
 import AppFormTopbar from "@/app-form-manager/AppFormTopbar";
 
@@ -14,7 +10,15 @@ export default function WorkflowManagerTopbar() {
     path?: string;
     name: string;
   } | null>(app.workflowManager.activeWorkflow);
+
   useEffect(() => {
+    window.parent.postMessage(
+      {
+        type: "set_workflow",
+        data: app.dbWorkflow,
+      },
+      "*",
+    );
     app?.workflowManager?.addEventListener("changeWorkflow", () => {
       setWorkflow(app.workflowManager?.activeWorkflow);
     });
