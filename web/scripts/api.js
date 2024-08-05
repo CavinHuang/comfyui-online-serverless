@@ -514,7 +514,8 @@ export class ServerlessComfyApi extends ComfyApi {
 	validateRunnable(output, workflow) {
 		// validate workflow prompt deps first
 		const deps = workflow.extra.deps;
-		const res = {}
+		const node_errors = {}
+		let error = null;
 		for (const nodeID of Object.keys(output)) {
 			const node = output[nodeID];
 			
@@ -523,36 +524,55 @@ export class ServerlessComfyApi extends ComfyApi {
 					const value = node.inputs?.[inputName];
 					if (typeof value != "string") return;
 					// Check if it's a model file
+					
+					const valueList1 = LiteGraph.registered_node_types[node.class_type].nodeData?.input?.required?.[inputName]?.[0];
+					const valueList2 = LiteGraph.registered_node_types[node.class_type].nodeData?.input?.optional?.[inputName]?.[0];
+					
+					if (!Array.isArray(valueList1) && !Array.isArray(valueList2)) {
+						return;
+					}
+					if (valueList1?.includes(value) || valueList2?.includes(value)) {
+						return;
+					}
 					if (modelFileExtensions.some((ext) => value.endsWith(ext))) {
-						const valueList1 = LiteGraph.registered_node_types[node.class_type].nodeData?.input?.required?.[inputName]?.[0] ?? [];
-						const valueList2 = LiteGraph.registered_node_types[node.class_type].nodeData?.input?.optional?.[inputName]?.[0] ?? [];
-						if (valueList1.includes(value) || valueList2.includes(value)) {
+						if (deps?.models?.[value]?.url && deps?.models?.[value]?.folder) {
 							return;
-						}
-						if (!deps?.models?.[value]?.url || !deps?.models?.[value]?.folder) {
-							res[nodeID] = {
-								errors: [{
-									type: "missing_model",
-									message: `Model file ${value} not found, please select a file`,
-								}]
-							}
 						}
 					}
 					// Check if it's an image file
 					if (imageFileExtensions.some((ext) => value.endsWith(ext))) {
-						if (!deps?.images?.[value]?.url ) {
-							res[nodeID] = {
-								errors: [{
-									type: "missing_image",
-									message: `Image file ${value} not found, please upload image`
-								}]
-							}
+						if (deps?.images?.[value]?.url ) {
+							return;	
 						}
+					}
+					error = {
+						details:"",
+						type: 'value_not_in_list',
+						message: `Invalid prompt`,
+					}
+					console.log('valueList1', valueList1, valueList2, 'class type',node.class_type);
+					const valuelist = (valueList1 ?? []).concat(valueList2 ?? []);
+					node_errors[nodeID] = {
+						errors: [{
+							class_type: node.class_type,
+							type: "value_not_in_list",
+							details: "",
+							message: `Value "${value}" not valid for input 👉${inputName}. Valid values are: ${valuelist.join("")}`,
+						}]
 					}
 				});
 			}
 		}
-		return res;
+
+		if(!error) {
+			return null;
+		}
+		throw {
+			response:  {
+				node_errors,
+				error
+			},
+		  };
 	}
 	apiURL(route) {
 		
@@ -579,12 +599,10 @@ export class ServerlessComfyApi extends ComfyApi {
 		if(!this.machine) {
 			throw new Error("Please select a machine to run on!");
 		}
-		const validRes = this.validateRunnable(output, workflow);
-		if (!!Object.keys(validRes).length) {
+		const errors = this.validateRunnable(output, workflow);
+		if (errors) {
 			// alert(validRes.error);
-			return {
-				node_errors: validRes,
-			}
+			return  errors;
 		}
 		const deps = {
 			// temporarily skip model deps for now cuz we do not allow select model now
