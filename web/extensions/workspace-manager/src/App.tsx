@@ -7,6 +7,9 @@ import { ThemeProvider } from "./components/theme-provider";
 import JobManagerTopbar from "./model-manager/JobManagerTopbar";
 import { SWRConfig } from "swr";
 import { swrLocalStorageProvider } from "./utils/swrFetcher";
+import ProfileTopbar from "./user-manager/ProfileTopbar";
+import { ComfyUser } from "./type/dbTypes";
+import Flex from "./components/ui/Flex";
 const ModelManagerTopbar = lazy(
   () => import("./model-manager/ModelManagerTopbar"),
 );
@@ -59,9 +62,10 @@ function App() {
             )}
           {myQueueButtonDiv &&
             ReactDOM.createPortal(
-              <div className="tailwind dark">
+              <Flex className="items-center gap-2">
                 <JobManagerTopbar />
-              </div>,
+                <ProfileTopbar />
+              </Flex>,
               myQueueButtonDiv,
             )}
         </div>
