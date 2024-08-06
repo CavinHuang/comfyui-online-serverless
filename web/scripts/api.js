@@ -623,6 +623,7 @@ export class ServerlessComfyApi extends ComfyApi {
 					prompt: output,
 					deps: deps,
 				},
+				machineID: this.machine.id,
 				workflowID: getCurWorkflowID(),
 				rp_endpoint_id: this.machine.rp_endpoint_id,
 			}),
