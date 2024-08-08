@@ -17,19 +17,20 @@ const ModelManagerTopbar = lazy(
 const topMenu = document.getElementsByClassName("comfyui-menu").item(0);
 
 const menuPush = document.getElementsByClassName("comfyui-menu-push").item(0);
-const myQueueButtonDiv = document.createElement("div");
+
 const leftMenu = document.createElement("div");
 const middleMenu = document.createElement("div");
-const queueButtonDiv = document
-  .getElementsByClassName("comfyui-queue-button")
-  .item(0);
 
 topMenu?.prepend(leftMenu);
 menuPush?.append(middleMenu);
-queueButtonDiv?.replaceWith(myQueueButtonDiv);
 
 function App() {
   const [finishLoading, setFinishLoading] = useState(false);
+  const myQueueButtonDiv = document.createElement("div");
+  const queueButtonDiv = document
+    .getElementsByClassName("comfyui-queue-button")
+    .item(0);
+  queueButtonDiv?.replaceWith(myQueueButtonDiv);
 
   useEffect(() => {
     if (import.meta.env.DEV) {
