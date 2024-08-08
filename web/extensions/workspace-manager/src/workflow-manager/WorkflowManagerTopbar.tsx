@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { app } from "../comfyapp";
+import { api, app } from "../comfyapp";
 import { Button } from "@/components/ui/button";
 import {
   IconDeviceFloppy,
@@ -32,27 +32,40 @@ export default function WorkflowManagerTopbar() {
     app?.workflowManager?.addEventListener("changeWorkflow", () => {
       setWorkflow(app.workflowManager?.activeWorkflow);
     });
+    api.addEventListener("workflowIDChanged", () => {
+      fetch("/api/workflow/getWorkflow?id=" + api.workflowID)
+        .then((res) => res.json())
+        .then((data) => {
+          app.dbWorkflow = data.data;
+          setWorkflow(app.dbWorkflow);
+        });
+    });
   }, []);
 
   return (
     <Flex className="workflow-manager-topbar items-center gap-2">
       <AppFormTopbar />
-      {workflow && (
-        <Button
-          size={"sm"}
-          onClick={() => setShowShareDialog(true)}
-          style={{ alignItems: "center" }}
-          variant={"secondary"}
-        >
-          {workflow.privacy === EWorkflowPrivacy.PRIVATE ? (
-            <IconShare2 size={18} />
-          ) : workflow.privacy === EWorkflowPrivacy.UNLISTED ? (
-            " 🔗"
-          ) : (
-            " 🌐"
-          )}
-        </Button>
-      )}
+
+      <Button
+        size={"sm"}
+        onClick={() => {
+          if (!workflow) {
+            alert("Please save your workflow first! 👉 💾");
+            return;
+          }
+          setShowShareDialog(true);
+        }}
+        style={{ alignItems: "center" }}
+        variant={"secondary"}
+      >
+        {workflow?.privacy === EWorkflowPrivacy.UNLISTED ? (
+          " 🔗"
+        ) : workflow?.privacy === EWorkflowPrivacy.PUBLIC ? (
+          " 🌐"
+        ) : (
+          <IconShare2 size={18} />
+        )}
+      </Button>
 
       <Button
         size={"sm"}
@@ -70,7 +83,7 @@ export default function WorkflowManagerTopbar() {
         <IconTriangleInvertedFilled size={9} />
       </Button>
 
-      {workflow?.id ? (
+      {workflow?.name ? (
         <p style={{ padding: 0, margin: 0 }}>{workflow.name}</p>
       ) : (
         <p

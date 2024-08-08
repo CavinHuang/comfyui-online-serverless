@@ -2482,7 +2482,7 @@ export function setCurWorkflowID(id) {
 	const searchParams = url.searchParams;
 	searchParams.set('editWorkflowID', id);
 	window.history.pushState({}, '', url);
-	dispatchEvent(new CustomEvent('workflowChanged', { detail: { id } }));
+	dispatchEvent(new CustomEvent('workflowIDChanged', { detail: { id } }));
 	// set nextjs window url
 	window.parent.postMessage({ type: 'change_url', url:`/comfyui/${id}?machine=${api.machine.id}` }, '*');
 	
