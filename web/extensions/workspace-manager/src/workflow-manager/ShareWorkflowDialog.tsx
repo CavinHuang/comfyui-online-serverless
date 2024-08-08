@@ -16,17 +16,20 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { api, app } from "@/comfyapp";
-import { Workflow } from "@/type/dbTypes";
+import { EWorkflowPrivacy, Workflow } from "@/type/dbTypes";
 import { getCurWorkflowID } from "@/utils";
 
-enum EWorkflowPrivacy {
-  PRIVATE = "PRIVATE",
-  PUBLIC = "PUBLIC",
-  UNLISTED = "UNLISTED",
-}
-export function ShareWorkflowDialog({ onClose }: { onClose: () => void }) {
-  const [privacy, setPrivacy] = useState<EWorkflowPrivacy>(
-    EWorkflowPrivacy.PRIVATE,
+export function ShareWorkflowDialog({
+  onClose,
+  workflow,
+  onShared,
+}: {
+  onClose: () => void;
+  workflow: Workflow;
+  onShared: (workflow: Workflow) => void;
+}) {
+  const [privacy, setPrivacy] = useState<EWorkflowPrivacy | null>(
+    workflow.privacy ?? EWorkflowPrivacy.PRIVATE,
   );
   const [loading, setLoading] = useState(false);
 
@@ -38,21 +41,22 @@ export function ShareWorkflowDialog({ onClose }: { onClose: () => void }) {
     }
     setLoading(true);
     // share workflow
-    const data = (await fetch("/api/shareWorkflow", {
+    const data = (await fetch("/api/workflow/shareWorkflow", {
       method: "POST",
       body: JSON.stringify({
         id: workflowID,
         privacy,
       }),
+      headers: {
+        "Content-Type": "application/json",
+      },
     }).then((res) => res.json())) as { data?: Workflow; error?: string };
-    console.log(data);
     setLoading(false);
-    console.log(data);
-    if (data.error) {
-      alert(`❌${data.error}`);
+    if (data.error || !data.data) {
+      alert(`❌Error sharing workflow. ${data.error}`);
       return;
     }
-
+    onShared(data.data!);
     onClose();
   };
   return (
@@ -70,10 +74,10 @@ export function ShareWorkflowDialog({ onClose }: { onClose: () => void }) {
           <div className="grid grid-cols-4 items-center gap-4">
             <p className="text-right">Privacy</p>
             <Select
-              value={privacy}
+              value={privacy as string}
               onValueChange={(val) => setPrivacy(val as EWorkflowPrivacy)}
             >
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-[280px]">
                 <SelectValue placeholder="Theme" />
               </SelectTrigger>
               <SelectContent>
@@ -81,7 +85,7 @@ export function ShareWorkflowDialog({ onClose }: { onClose: () => void }) {
                   🔒 Private
                 </SelectItem>
                 <SelectItem value={EWorkflowPrivacy.UNLISTED}>
-                  🔗 Anyone with this link can view
+                  🔗 Anyone with the link can view
                 </SelectItem>
                 {/* <SelectItem value={EWorkflowPrivacy.PUBLIC}>
                   🌐 Public

@@ -16,7 +16,13 @@ export type Workflow = {
   createdAt: string;
   name: string;
   description: string;
-  privacy: string;
+  privacy: EWorkflowPrivacy | null;
   machine_id: string;
   json: string;
 };
+
+export enum EWorkflowPrivacy {
+  PRIVATE = "PRIVATE",
+  PUBLIC = "PUBLIC",
+  UNLISTED = "UNLISTED",
+}

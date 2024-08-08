@@ -11,7 +11,7 @@ import {
 import Flex from "@/components/ui/Flex";
 import AppFormTopbar from "@/app-form-manager/AppFormTopbar";
 import { ShareWorkflowDialog } from "./ShareWorkflowDialog";
-import { Workflow } from "@/type/dbTypes";
+import { EWorkflowPrivacy, Workflow } from "@/type/dbTypes";
 
 export default function WorkflowManagerTopbar() {
   const [workflow, setWorkflow] = useState<
@@ -33,30 +33,27 @@ export default function WorkflowManagerTopbar() {
       setWorkflow(app.workflowManager?.activeWorkflow);
     });
   }, []);
-  const changeWorkflow = (workflow: Workflow | null) => {
-    setWorkflow(workflow);
-    const url = new URL(window.location.href);
-    const searchParams = url.searchParams;
-
-    if (!workflow) {
-      searchParams.delete("editWorkflowID");
-      window.history.pushState({}, "ComfyUI Online Editor - Nodecafe", url);
-      return;
-    }
-    searchParams.set("editWorkflowID", workflow.id);
-    window.history.pushState({}, workflow.name ?? "Untitled workflow", url);
-  };
 
   return (
     <Flex className="workflow-manager-topbar items-center gap-2">
       <AppFormTopbar />
-      <Button
-        size={"sm"}
-        onClick={() => setShowShareDialog(true)}
-        variant={"secondary"}
-      >
-        <IconShare2 size={18} />
-      </Button>
+      {workflow && (
+        <Button
+          size={"sm"}
+          onClick={() => setShowShareDialog(true)}
+          style={{ alignItems: "center" }}
+          variant={"secondary"}
+        >
+          {workflow.privacy === EWorkflowPrivacy.PRIVATE ? (
+            <IconShare2 size={18} />
+          ) : workflow.privacy === EWorkflowPrivacy.UNLISTED ? (
+            " 🔗"
+          ) : (
+            " 🌐"
+          )}
+        </Button>
+      )}
+
       <Button
         size={"sm"}
         className="gap-1"
@@ -73,7 +70,7 @@ export default function WorkflowManagerTopbar() {
         <IconTriangleInvertedFilled size={9} />
       </Button>
 
-      {workflow?.path ? (
+      {workflow?.id ? (
         <p style={{ padding: 0, margin: 0 }}>{workflow.name}</p>
       ) : (
         <p
@@ -105,8 +102,14 @@ export default function WorkflowManagerTopbar() {
       >
         <IconPlus size={18} />
       </Button> */}
-      {showShareDialog && (
-        <ShareWorkflowDialog onClose={() => setShowShareDialog(false)} />
+      {showShareDialog && workflow && (
+        <ShareWorkflowDialog
+          onClose={() => setShowShareDialog(false)}
+          workflow={workflow}
+          onShared={(workflow) => {
+            setWorkflow(workflow);
+          }}
+        />
       )}
     </Flex>
   );
