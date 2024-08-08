@@ -9,3 +9,14 @@ export type ComfyUser = {
   provider: string;
   oauthSub: string;
 };
+
+export type Workflow = {
+  id: string;
+  updatedAt: string;
+  createdAt: string;
+  name: string;
+  description: string;
+  privacy: string;
+  machine_id: string;
+  json: string;
+};

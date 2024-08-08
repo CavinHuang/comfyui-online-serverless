@@ -479,8 +479,7 @@ class ComfyApi extends EventTarget {
 	}
 }
 
-import { app, getCurWorkflowID, setCurWorkflowID } from "./app.js";
-import {ComfyButton} from './ui/components/button.js';
+import { app, setCurWorkflowID } from "./app.js";
 import { ComfyWorkflow } from "./workflows.js";
 import {serverNodeDefs} from '/serverNodeDefs.js'
 export class ServerlessComfyApi extends ComfyApi {
@@ -624,7 +623,7 @@ export class ServerlessComfyApi extends ComfyApi {
 					deps: deps,
 				},
 				machineID: this.machine.id,
-				workflowID: getCurWorkflowID(),
+				workflowID: this.getCurWorkflowID(),
 				rp_endpoint_id: this.machine.rp_endpoint_id,
 			}),
 		}).then((res) => res.json());
@@ -718,7 +717,7 @@ export class ServerlessComfyApi extends ComfyApi {
 			// saving workflow
 			console.log('saving workflow app.graph', JSON.parse(data));
 			const graph = app.graph.serialize();
-			let curWorkflowID = getCurWorkflowID();
+			let curWorkflowID = this.getCurWorkflowID();
 			if (!curWorkflowID) {
 				// create workflow
 				const filename = file.match(/(?<=workflows\/)[^/]+(?=\.json)/);
@@ -731,6 +730,7 @@ export class ServerlessComfyApi extends ComfyApi {
 						name: filename,
 						json: JSON.stringify(graph),
 						machine_id: this.machine.id,
+						privacy: "UNLISTED",
 					})
 				}).then((res) => res.json());
 				if(resp.error || !resp.data.id) {
@@ -764,6 +764,12 @@ export class ServerlessComfyApi extends ComfyApi {
 			console.log('workflow saved',resp);
 		}
 	}
+
+	getCurWorkflowID() {
+		const editWorkflowID = new URLSearchParams(window.location.search).get("editWorkflowID");
+		return !!editWorkflowID?.length ? editWorkflowID : null;
+	}
+	
 }
 
 export const modelFileExtensions = [

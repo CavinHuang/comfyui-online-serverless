@@ -14,23 +14,21 @@ const ModelManagerTopbar = lazy(
   () => import("./model-manager/ModelManagerTopbar"),
 );
 
+const topMenu = document.getElementsByClassName("comfyui-menu").item(0);
+
+const menuPush = document.getElementsByClassName("comfyui-menu-push").item(0);
+const myQueueButtonDiv = document.createElement("div");
+const leftMenu = document.createElement("div");
+const middleMenu = document.createElement("div");
+const queueButtonDiv = document
+  .getElementsByClassName("comfyui-queue-button")
+  .item(0);
+
+topMenu?.prepend(leftMenu);
+menuPush?.append(middleMenu);
+queueButtonDiv?.replaceWith(myQueueButtonDiv);
+
 function App() {
-  console.log("🦄 workspace manager App");
-  const topMenu = document.getElementsByClassName("comfyui-menu").item(0);
-  if (!topMenu) {
-    console.error("🦄❌❌ comfyui-menu not found");
-  }
-  const leftMenu = document.createElement("div");
-  const menuPush = document.getElementsByClassName("comfyui-menu-push").item(0);
-  console.log("🦄 menuPush", menuPush);
-  const middleMenu = document.createElement("div");
-  const queueButtonDiv = document
-    .getElementsByClassName("comfyui-queue-button")
-    .item(0);
-  const myQueueButtonDiv = document.createElement("div");
-  topMenu?.prepend(leftMenu);
-  menuPush?.append(middleMenu);
-  queueButtonDiv?.replaceWith(myQueueButtonDiv);
   const [finishLoading, setFinishLoading] = useState(false);
 
   useEffect(() => {

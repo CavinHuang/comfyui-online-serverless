@@ -49,7 +49,10 @@ export default function ModelManagerDrawer({
 
   return (
     <>
-      <CustomDrawer onClose={onClose} className="w-full md:!w-[500px]">
+      <CustomDrawer
+        onClose={onClose}
+        className="w-full md:!w-[500px] overflow-y-auto"
+      >
         <div className="gap-5 p-5">
           <Flex className="justify-between mb-5">
             <Flex className="gap-5 items-center">
