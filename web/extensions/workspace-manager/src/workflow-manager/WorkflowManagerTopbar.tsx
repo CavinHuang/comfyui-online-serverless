@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { api, app } from "../comfyapp";
 import { Button } from "@/components/ui/button";
 import {
-  IconDeviceFloppy,
   IconFolder,
   IconPlus,
   IconShare2,
