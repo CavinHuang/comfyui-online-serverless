@@ -2474,16 +2474,3 @@ export async function loadModuleBasedOnPath() {
 	app?.menu?.actionsGroup.remove(0);
   }
 }
-
-
-export function setCurWorkflowID(id) {
-	// set iframe url
-	const url = new URL(window.location.href);
-	const searchParams = url.searchParams;
-	searchParams.set('editWorkflowID', id);
-	window.history.pushState({}, '', url);
-	dispatchEvent(new CustomEvent('workflowIDChanged', { detail: { id } }));
-	// set nextjs window url
-	window.parent.postMessage({ type: 'change_url', url:`/comfyui/${id}?machine=${api.machine.id}` }, '*');
-	
-}

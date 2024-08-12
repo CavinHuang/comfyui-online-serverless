@@ -9,3 +9,6 @@ export function cn(...inputs: ClassValue[]) {
 export function getCurWorkflowID(): string | null {
   return api.getCurWorkflowID();
 }
+export function setCurWorkflowID(id: string | null) {
+  api.setCurWorkflowID(id);
+}

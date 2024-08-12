@@ -12,6 +12,7 @@ import Flex from "@/components/ui/Flex";
 import AppFormTopbar from "@/app-form-manager/AppFormTopbar";
 import { ShareWorkflowDialog } from "./ShareWorkflowDialog";
 import { EWorkflowPrivacy, Workflow } from "@/type/dbTypes";
+import { getCurWorkflowID, setCurWorkflowID } from "@/utils";
 
 export default function WorkflowManagerTopbar() {
   const [workflow, setWorkflow] = useState<
@@ -29,11 +30,17 @@ export default function WorkflowManagerTopbar() {
       },
       "*",
     );
-    app?.workflowManager?.addEventListener("changeWorkflow", () => {
-      setWorkflow(app.workflowManager?.activeWorkflow);
-    });
+    // app?.workflowManager?.addEventListener("changeWorkflow", () => {
+    //   setWorkflow(app.workflowManager?.activeWorkflow);
+    // });
     api.addEventListener("workflowIDChanged", () => {
-      fetch("/api/workflow/getWorkflow?id=" + api.workflowID)
+      const workflowID = getCurWorkflowID();
+      console.log("🔗workflowIDChanged", workflowID);
+      if (!workflowID) {
+        setWorkflow(null);
+        return;
+      }
+      fetch("/api/workflow/getWorkflow?id=" + workflowID)
         .then((res) => res.json())
         .then((data) => {
           app.dbWorkflow = data.data;
@@ -82,7 +89,20 @@ export default function WorkflowManagerTopbar() {
         <IconFolder size={18} />
         <IconTriangleInvertedFilled size={9} />
       </Button>
-
+      <Button
+        size={"sm"}
+        variant={"secondary"}
+        onClick={() => {
+          const confirm = window.confirm(
+            "Are you sure you want to create a new workflow? Your unsaved changes will be lost.",
+          );
+          if (!confirm) return;
+          setCurWorkflowID(null);
+          app.loadGraphData();
+        }}
+      >
+        <IconPlus size={18} />
+      </Button>
       {workflow?.name ? (
         <p style={{ padding: 0, margin: 0 }}>{workflow.name}</p>
       ) : (
@@ -106,14 +126,6 @@ export default function WorkflowManagerTopbar() {
         size={"sm"}
       >
         <IconDeviceFloppy size={18} />
-      </Button>
-      <Button
-        size={"sm"}
-        onClick={() => {
-          changeWorkflow(null);
-        }}
-      >
-        <IconPlus size={18} />
       </Button> */}
       {showShareDialog && workflow && (
         <ShareWorkflowDialog

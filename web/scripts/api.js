@@ -479,7 +479,7 @@ class ComfyApi extends EventTarget {
 	}
 }
 
-import { app, setCurWorkflowID } from "./app.js";
+import { app } from "./app.js";
 import { ComfyWorkflow } from "./workflows.js";
 import {serverNodeDefs} from '/serverNodeDefs.js'
 export class ServerlessComfyApi extends ComfyApi {
@@ -733,11 +733,11 @@ export class ServerlessComfyApi extends ComfyApi {
 						privacy: "UNLISTED",
 					})
 				}).then((res) => res.json());
-				if(resp.error || !resp.data.id) {
+				if(resp.error || !resp.data?.id) {
 					alert(`❌Error saving workflow: ${resp.error}`);
 					return;
 				}
-				setCurWorkflowID(resp.data.id);
+				this.setCurWorkflowID(resp.data.id);
 				graph.extra.workflow_id = resp.data.id;
 				const comfyworkflow = new ComfyWorkflow(app.workflowManager, filename+'.json', [filename+'.json']);
 				app.workflowManager.setWorkflow(comfyworkflow)
@@ -769,6 +769,25 @@ export class ServerlessComfyApi extends ComfyApi {
 		const editWorkflowID = new URLSearchParams(window.location.search).get("editWorkflowID");
 		return !!editWorkflowID?.length ? editWorkflowID : null;
 	}
+
+	setCurWorkflowID(id) {
+		// set iframe url
+		const url = new URL(window.location.href);
+		if (!id) {
+			url.searchParams.delete('editWorkflowID');
+			window.history.pushState({}, '', url);
+			api.dispatchEvent(new CustomEvent('workflowIDChanged', { detail: { id } }));
+			window.parent.postMessage({ type: 'change_url', url:`/comfyui?machine=${api.machine.id}` }, '*');
+		} else {
+			const searchParams = url.searchParams;
+			searchParams.set('editWorkflowID', id);
+			window.history.pushState({}, '', url);
+			api.dispatchEvent(new CustomEvent('workflowIDChanged', { detail: { id } }));
+			// set nextjs window url
+			window.parent.postMessage({ type: 'change_url', url:`/comfyui/${id}?machine=${api.machine.id}` }, '*');
+		}
+	}
+	
 	
 }
 
