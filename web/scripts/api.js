@@ -513,6 +513,11 @@ export class ServerlessComfyApi extends ComfyApi {
 	validateRunnable(output, workflow) {
 		// validate workflow prompt deps first
 		const deps = workflow.extra.deps;
+		// only keep the deps that are used in the prompt
+		const newDeps = {
+			images: {},
+			models: {},
+		}
 		const node_errors = {}
 		let error = null;
 		for (const nodeID of Object.keys(output)) {
@@ -526,24 +531,26 @@ export class ServerlessComfyApi extends ComfyApi {
 					
 					const valueList1 = LiteGraph.registered_node_types[node.class_type].nodeData?.input?.required?.[inputName]?.[0];
 					const valueList2 = LiteGraph.registered_node_types[node.class_type].nodeData?.input?.optional?.[inputName]?.[0];
-					
 					if (!Array.isArray(valueList1) && !Array.isArray(valueList2)) {
 						return;
+					}
+					// Check if it's an image file, need to check if in deps first cuz valueList include extra uploaded image immediately (even when it not exists in server files)
+					if (imageFileExtensions.some((ext) => value.endsWith(ext))) {
+						if (deps?.images?.[value]?.url ) {
+							newDeps.images[value] = deps.images[value];
+							return;	
+						}
 					}
 					if (valueList1?.includes(value) || valueList2?.includes(value)) {
 						return;
 					}
 					if (modelFileExtensions.some((ext) => value.endsWith(ext))) {
 						if (deps?.models?.[value]?.url && deps?.models?.[value]?.folder) {
+							newDeps.models[value] = deps.models[value];
 							return;
 						}
 					}
-					// Check if it's an image file
-					if (imageFileExtensions.some((ext) => value.endsWith(ext))) {
-						if (deps?.images?.[value]?.url ) {
-							return;	
-						}
-					}
+				
 					error = {
 						details:"",
 						type: 'value_not_in_list',
@@ -564,7 +571,8 @@ export class ServerlessComfyApi extends ComfyApi {
 		}
 
 		if(!error) {
-			return null;
+			app.graph.extra.deps = newDeps;
+			return newDeps;
 		}
 		throw {
 			response:  {
@@ -579,7 +587,13 @@ export class ServerlessComfyApi extends ComfyApi {
 			console.log('view route', route);
 			const searchParams = new URLSearchParams(route.split('?')[1]);
 			console.log('filename', searchParams.get('filename'));
-			return app.graph.extra?.deps?.images?.[searchParams.get('filename')];
+			const image = app.graph.extra?.deps?.images?.[searchParams.get('filename')];
+			if(typeof image === 'string') {
+				return image;
+			}
+			if(image?.url) {
+				return image.url;
+			}
 		}
 		return this.api_base + route;
 	}
@@ -598,20 +612,18 @@ export class ServerlessComfyApi extends ComfyApi {
 		if(!this.machine) {
 			throw new Error("Please select a machine to run on!");
 		}
-		const errors = this.validateRunnable(output, workflow);
-		if (errors) {
-			// alert(validRes.error);
-			return  errors;
-		}
+		const newDeps = this.validateRunnable(output, workflow);
 		const deps = {
 			// temporarily skip model deps for now cuz we do not allow select model now
-			images:{
-				...workflow.extra?.deps?.images
-			}, 
+			...newDeps,
 			machine: {
 				id: this.machine.id,
 				snapshot: JSON.parse(this.machine.snapshot),
 			}};
+			console.log('input', {
+				prompt: output,
+				deps: deps,
+			},)
 		const res = await fetch("/api/workflow/runWorkflow", {
 			method: "POST",
 			headers: {
@@ -634,7 +646,7 @@ export class ServerlessComfyApi extends ComfyApi {
 		if(!res.data?.id) {
 			throw new Error("Error running workflow. Please try again");
 		}
-		localStorage.setItem("job", JSON.stringify(res.data));
+		sessionStorage.setItem("job", JSON.stringify(res.data));
 		window.open('/job/'+ res.data.id);
 		this.dispatchEvent(new CustomEvent("jobQueued", { detail: res.data }));
 		return {
@@ -660,7 +672,9 @@ export class ServerlessComfyApi extends ComfyApi {
 				if(!app.graph.extra.deps.images) {
 					app.graph.extra.deps.images = {};
 				}
-				app.graph.extra.deps.images[fileName] = res[fileName];
+				app.graph.extra.deps.images[fileName] = {
+					url: res[fileName],
+				}
 				return {
 					status: 200,
 					json: () => Promise.resolve({
@@ -797,8 +811,12 @@ export const modelFileExtensions = [
 	".bin",
 	".pth",
 	".safetensors",
+	'.sft'
   ];
-export const imageFileExtensions = [".jpeg", ".jpg", ".png", ".gif", ".webp"];
+export const imageFileExtensions = [
+	".jpeg", ".jpg", ".png", ".gif", ".webp", // Image extensions
+	".mp4", ".mkv", ".mov", ".avi", ".flv", ".wmv", ".webm", ".mpg", ".mpeg", ".m4v", ".3gp", ".3g2" // Video extensions
+  ];
 
 export let api = new ServerlessComfyApi();
 
