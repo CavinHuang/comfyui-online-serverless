@@ -32,7 +32,7 @@ export default function JobManagerTopbar() {
         <IconTriangleInvertedFilled size={10} />
       </Button> */}
       <Button
-        className="ml-2 gap-1 bg-sky-600 text-white"
+        className="ml-2 gap-1 bg-sky-600 text-white px-4"
         size={"sm"}
         isLoading={queuingPrompt}
         onClick={async () => {

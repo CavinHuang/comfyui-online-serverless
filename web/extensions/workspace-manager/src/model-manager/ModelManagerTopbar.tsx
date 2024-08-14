@@ -41,7 +41,7 @@ export default function ModelManagerTopbar({
       {api.machine?.id ? (
         <>
           <Button
-            className={`ml-2 h-[${TOP_BAR_BUTTON_HEIGHT}]`}
+            className={`ml-2`}
             size={"sm"}
             onClick={() => setShowModelDrawer(true)}
           >
@@ -50,7 +50,7 @@ export default function ModelManagerTopbar({
           <Button
             variant={"outline"}
             size={"sm"}
-            className={`ml-4 h-[${TOP_BAR_BUTTON_HEIGHT}]`}
+            className={`ml-4`}
             style={{ backgroundColor: "#2F343F" }}
           >
             <HardDrive size={"16"} />
@@ -59,7 +59,7 @@ export default function ModelManagerTopbar({
           </Button>
         </>
       ) : (
-        <p>❓Select Machine</p>
+        <p className="text-red-400">❓Select Machine</p>
       )}
     </Flex>
   );

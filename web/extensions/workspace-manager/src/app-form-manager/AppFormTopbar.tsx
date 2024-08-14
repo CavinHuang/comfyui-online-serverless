@@ -8,7 +8,8 @@ export default function AppFormTopbar() {
     <Flex className="workflow-manager-topbar items-center gap-2">
       <Button
         size={"sm"}
-        className="bg-purple-500 hover:bg-purple-300 text-white"
+        className=" hover:bg-purple-300 font-normal gap-1"
+        style={{ backgroundColor: "#2F2C39", color: "#D2BDF6" }}
         onClick={async () => {
           const p = await app.graphToPrompt();
           window.parent.postMessage(
