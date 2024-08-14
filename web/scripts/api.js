@@ -584,7 +584,6 @@ export class ServerlessComfyApi extends ComfyApi {
 	apiURL(route) {
 		
 		if(route.startsWith('/view?filename=')) {
-			console.log('view route', route);
 			const searchParams = new URLSearchParams(route.split('?')[1]);
 			console.log('filename', searchParams.get('filename'));
 			const image = app.graph.extra?.deps?.images?.[searchParams.get('filename')];
@@ -620,10 +619,10 @@ export class ServerlessComfyApi extends ComfyApi {
 				id: this.machine.id,
 				snapshot: JSON.parse(this.machine.snapshot),
 			}};
-			console.log('input', {
-				prompt: output,
-				deps: deps,
-			},)
+		console.log('input', {
+			prompt: output,
+			deps: deps,
+		},)
 		const res = await fetch("/api/workflow/runWorkflow", {
 			method: "POST",
 			headers: {
@@ -639,7 +638,6 @@ export class ServerlessComfyApi extends ComfyApi {
 				rp_endpoint_id: this.machine.rp_endpoint_id,
 			}),
 		}).then((res) => res.json());
-		console.log('run res', res);
 		if (res.error) {
 			throw new Error(res.error);
 		}
