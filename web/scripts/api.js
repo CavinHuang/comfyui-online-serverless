@@ -741,7 +741,7 @@ export class ServerlessComfyApi extends ComfyApi {
 					body: JSON.stringify({
 						name: filename,
 						json: JSON.stringify(graph),
-						machine_id: this.machine.id,
+						machine_id: this.machine?.id,
 						privacy: "UNLISTED",
 					})
 				}).then((res) => res.json());
@@ -789,14 +789,14 @@ export class ServerlessComfyApi extends ComfyApi {
 			url.searchParams.delete('editWorkflowID');
 			window.history.pushState({}, '', url);
 			api.dispatchEvent(new CustomEvent('workflowIDChanged', { detail: { id } }));
-			window.parent.postMessage({ type: 'change_url', url:`/comfyui?machine=${api.machine.id}` }, '*');
+			window.parent.postMessage({ type: 'change_url', url:`/comfyui?machine=${api.machine?.id ?? ''}` }, '*');
 		} else {
 			const searchParams = url.searchParams;
 			searchParams.set('editWorkflowID', id);
 			window.history.pushState({}, '', url);
 			api.dispatchEvent(new CustomEvent('workflowIDChanged', { detail: { id } }));
 			// set nextjs window url
-			window.parent.postMessage({ type: 'change_url', url:`/comfyui/${id}?machine=${api.machine.id}` }, '*');
+			window.parent.postMessage({ type: 'change_url', url:`/comfyui/${id}?machine=${api.machine?.id ?? ''}` }, '*');
 		}
 	}
 	
