@@ -24,7 +24,22 @@ export default function ProfileTopbar(
       });
   }, []);
   if (!user) {
-    return <a href="/auth/signin">Login</a>;
+    return (
+      <a
+        style={{ cursor: "pointer" }}
+        onClick={() => {
+          window.parent.postMessage(
+            {
+              type: "change_url",
+              url: "/auth/signin",
+            },
+            "*",
+          );
+        }}
+      >
+        Login
+      </a>
+    );
   }
   return (
     <Flex className="items-center gap-2">
