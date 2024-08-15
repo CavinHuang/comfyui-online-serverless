@@ -87,9 +87,9 @@ export function ShareWorkflowDialog({
                 <SelectItem value={EWorkflowPrivacy.UNLISTED}>
                   🔗 Anyone with the link can view
                 </SelectItem>
-                {/* <SelectItem value={EWorkflowPrivacy.PUBLIC}>
+                <SelectItem value={EWorkflowPrivacy.PUBLIC}>
                   🌐 Public
-                </SelectItem> */}
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
