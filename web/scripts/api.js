@@ -770,6 +770,7 @@ export class ServerlessComfyApi extends ComfyApi {
 					id: curWorkflowID,
 					updateData: {
 						json: JSON.stringify(graph),
+						machine_id: this.machine?.id,
 					}
 				})
 			}).then((res) => res.json());
