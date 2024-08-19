@@ -26,9 +26,6 @@
 				editWorkflowID && fetch('/api/workflow/getWorkflowWithVersion?id='+editWorkflowID).then(res => res.json())
 			])
 			console.log('machine', machine, 'workflow', workflow)
-			// if(editWorkflowID && !machine) {
-			// 	window.location.href = '/404';
-			// }
 			
 			if (editWorkflowID && !workflow?.data?.json) {
 				window.location.href = '/404';
