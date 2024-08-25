@@ -12,6 +12,7 @@ import AppFormTopbar from "@/app-form-manager/AppFormTopbar";
 import { ShareWorkflowDialog } from "./ShareWorkflowDialog";
 import { EWorkflowPrivacy, Workflow } from "@/type/dbTypes";
 import { getCurWorkflowID, setCurWorkflowID } from "@/utils";
+import SaveButton from "./SaveButton";
 
 export default function WorkflowManagerTopbar() {
   const [workflow, setWorkflow] = useState<
@@ -112,20 +113,7 @@ export default function WorkflowManagerTopbar() {
           Unsaved
         </p>
       )}
-
-      {/* <Button
-        onClick={() => {
-          const workflowName = prompt(
-            "Save workflow as:",
-            app.workflowManager?.activeWorkflow?.name ?? "Untitled workflow",
-          );
-          if (!workflowName) return;
-          app.workflowManager.saveWorkflow(workflowName);
-        }}
-        size={"sm"}
-      >
-        <IconDeviceFloppy size={18} />
-      </Button> */}
+      <SaveButton />
       {showShareDialog && workflow && (
         <ShareWorkflowDialog
           onClose={() => setShowShareDialog(false)}
