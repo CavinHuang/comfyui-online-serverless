@@ -1,28 +1,10 @@
 import Flex from "@/components/ui/Flex";
-import { useEffect, useState } from "react";
-import { fetchCurrentUser } from "./UserManagerAPI";
-import { ComfyUser } from "@/type/dbTypes";
+import { useContext } from "react";
+import { WorkspaceContext } from "@/WorkspaceContext";
 
-export default function ProfileTopbar(
-  {
-    //   user,
-    //   setUser,
-  }: {
-    //   user?: ComfyUser & {
-    //     balance?: string;
-    //   };
-    //   setUser: (user: ComfyUser) => void;
-  },
-) {
-  const [user, setUser] = useState<ComfyUser & { balance?: string }>();
-  useEffect(() => {
-    console.log("fetching user");
-    fetch("/api/user/getCurrentUser")
-      .then((res) => res.json())
-      .then((data) => {
-        setUser(data);
-      });
-  }, []);
+export default function ProfileTopbar() {
+  const { user } = useContext(WorkspaceContext);
+
   if (!user) {
     return (
       <a

@@ -1,6 +1,7 @@
 // @ts-ignore
 export let app: any | null = null;
 export let api: any | null = null;
+export let workflow: any | null = null;
 
 const api_base = location.pathname.split("/").slice(0, -1).join("/");
 
@@ -12,6 +13,9 @@ export async function waitForApp() {
 
     import(api_base + "/scripts/app.js").then((appJs) => {
       app = appJs?.app;
+    }),
+    import(api_base + "/scripts/workflows.js").then((workflowJs) => {
+      workflow = workflowJs;
     }),
   ]);
 }
