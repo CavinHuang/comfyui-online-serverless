@@ -17,6 +17,7 @@ import {
 import { EWorkflowPrivacy, Workflow } from "@/type/dbTypes";
 import { getCurWorkflowID } from "@/utils";
 import Flex from "@/components/ui/Flex";
+import { useToast } from "@/components/ui/use-toast";
 
 export function ShareWorkflowDialog({
   onClose,
@@ -58,6 +59,7 @@ export function ShareWorkflowDialog({
     onShared(data.data!);
     onClose();
   };
+  const { toast } = useToast();
   return (
     <Dialog
       open
@@ -94,9 +96,13 @@ export function ShareWorkflowDialog({
           </div>
           <Flex className="items-center gap-1">
             <Button
-              onClick={() =>
-                navigator.clipboard.writeText(window.location.href)
-              }
+              variant={"outline"}
+              onClick={() => {
+                navigator.clipboard.writeText(window.location.href);
+                toast({
+                  title: "✅ Link copied",
+                });
+              }}
             >
               Copy Link
             </Button>

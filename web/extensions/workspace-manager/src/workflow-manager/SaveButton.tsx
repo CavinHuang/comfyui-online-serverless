@@ -40,7 +40,7 @@ export default function SaveButton() {
     setSaving(false);
     if (res?.id) {
       toast({
-        title: "Saved successfully",
+        title: "✅ Saved successfully",
       });
     }
   };
