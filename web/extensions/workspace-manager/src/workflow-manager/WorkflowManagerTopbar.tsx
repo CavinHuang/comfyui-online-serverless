@@ -71,7 +71,8 @@ export default function WorkflowManagerTopbar() {
           " 🌐"
         ) : (
           <IconShare2 size={18} />
-        )}
+        )}{" "}
+        Share
       </Button>
 
       <Button
@@ -104,7 +105,9 @@ export default function WorkflowManagerTopbar() {
         <IconPlus size={18} />
       </Button>
       {workflow?.name ? (
-        <p style={{ padding: 0, margin: 0 }}>{workflow.name}</p>
+        <p className="p-0 m-0 font-bold text-lg text-[1.05rem]">
+          {workflow.name}
+        </p>
       ) : (
         <p
           className="text-muted-foreground italic"

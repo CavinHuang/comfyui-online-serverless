@@ -14,10 +14,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { api, app } from "@/comfyapp";
 import { EWorkflowPrivacy, Workflow } from "@/type/dbTypes";
 import { getCurWorkflowID } from "@/utils";
+import Flex from "@/components/ui/Flex";
 
 export function ShareWorkflowDialog({
   onClose,
@@ -93,6 +92,16 @@ export function ShareWorkflowDialog({
               </SelectContent>
             </Select>
           </div>
+          <Flex className="items-center gap-1">
+            <Button
+              onClick={() =>
+                navigator.clipboard.writeText(window.location.href)
+              }
+            >
+              Copy Link
+            </Button>
+            {/* <a href={window.location.href}>{window.location.href}</a> */}
+          </Flex>
         </div>
         <DialogFooter>
           <Button

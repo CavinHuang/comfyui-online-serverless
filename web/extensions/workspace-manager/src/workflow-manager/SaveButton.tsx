@@ -1,4 +1,4 @@
-import { useEffect, useContext } from "react";
+import { useEffect, useContext, useState } from "react";
 import { app } from "../comfyapp";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,7 +9,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/components/ui/use-toast";
-import { IconDeviceFloppy, IconChevronDown } from "@tabler/icons-react";
+import {
+  IconDeviceFloppy,
+  IconChevronDown,
+  IconCopy,
+} from "@tabler/icons-react";
 import Flex from "@/components/ui/Flex";
 import { downloadBlob, getCurWorkflowID } from "@/utils";
 import { saveWorkflow } from "./workflowAPI";
@@ -18,20 +22,14 @@ import { WorkspaceContext } from "@/WorkspaceContext";
 export default function SaveButton() {
   const { user } = useContext(WorkspaceContext);
   const { toast } = useToast();
+  const [saving, setSaving] = useState(false);
+  const noWriteAccess = app.dbWorkflow && user?.id !== app.dbWorkflow.authorID;
 
   const onSave = async (isSaveAs = false) => {
+    setSaving(true);
     let fileName = app?.workflowManager?.activeWorkflow?.name;
-
-    const noWriteAccess =
-      app.dbWorkflow && !isSaveAs && user?.id !== app.dbWorkflow.authorID;
-
     if (isSaveAs || !getCurWorkflowID() || noWriteAccess) {
-      fileName = prompt(
-        noWriteAccess
-          ? "No write access, do you want to save as copy?"
-          : "Save workflow as:",
-        fileName,
-      );
+      fileName = prompt("Please enter a name to save the workflow:", fileName);
       if (!fileName) return;
     }
 
@@ -39,6 +37,7 @@ export default function SaveButton() {
       name: fileName,
       isSaveAs: isSaveAs || noWriteAccess,
     });
+    setSaving(false);
     if (res?.id) {
       toast({
         title: "Saved successfully",
@@ -83,13 +82,20 @@ export default function SaveButton() {
     <Flex className="items-center gap-px">
       <Button
         size={"sm"}
-        className="rounded"
+        className="rounded hover:bg-primary/20"
         variant={"secondary"}
+        isLoading={saving}
         onClick={() => {
-          onSave();
+          onSave(noWriteAccess);
         }}
       >
-        <IconDeviceFloppy color="#fff" size={18} />
+        {noWriteAccess ? (
+          <Flex className="gap-1">
+            <IconCopy size={16} /> <span>Save Copy</span>
+          </Flex>
+        ) : (
+          <IconDeviceFloppy color="#fff" size={18} />
+        )}
       </Button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -104,13 +110,6 @@ export default function SaveButton() {
         </DropdownMenuTrigger>
         <DropdownMenuContent className="min-w-24">
           <DropdownMenuGroup>
-            <DropdownMenuItem
-              onSelect={() => {
-                onSave();
-              }}
-            >
-              Save
-            </DropdownMenuItem>
             <DropdownMenuItem
               onSelect={() => {
                 onSave(true);
