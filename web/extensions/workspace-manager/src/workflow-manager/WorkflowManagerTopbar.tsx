@@ -6,6 +6,7 @@ import {
   IconPlus,
   IconShare2,
   IconTriangleInvertedFilled,
+  IconCategory,
 } from "@tabler/icons-react";
 import Flex from "@/components/ui/Flex";
 import AppFormTopbar from "@/app-form-manager/AppFormTopbar";
@@ -51,6 +52,23 @@ export default function WorkflowManagerTopbar() {
 
   return (
     <Flex className="workflow-manager-topbar items-center gap-2">
+      <Button
+        size={"sm"}
+        className="gap-1"
+        variant={"secondary"}
+        onClick={() => {
+          window.parent.postMessage(
+            {
+              type: "show_overview",
+            },
+            "*",
+          );
+        }}
+      >
+        <IconCategory size={18} />
+        Overview
+      </Button>
+
       <AppFormTopbar />
 
       <Button
