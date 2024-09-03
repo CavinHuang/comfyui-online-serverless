@@ -6,6 +6,7 @@ import { IconRefresh, IconTriangleInvertedFilled } from "@tabler/icons-react";
 import ModelManagerDrawer from "./ModelManagerDrawer";
 import { TOP_BAR_BUTTON_HEIGHT } from "@/constants";
 import { HardDrive } from "lucide-react";
+import ShareButton from "@/components/ShareButton";
 
 export default function ModelManagerTopbar({
   className,
@@ -15,7 +16,7 @@ export default function ModelManagerTopbar({
   const [showModelDrawer, setShowModelDrawer] = useState(false);
   const [refreshingNodes, setRefreshingNodes] = useState(false);
   return (
-    <Flex className={className + " items-center"}>
+    <Flex className={className + " items-center gap-2"}>
       {showModelDrawer && (
         <ModelManagerDrawer onClose={() => setShowModelDrawer(false)} />
       )}
@@ -40,17 +41,12 @@ export default function ModelManagerTopbar({
       </Button>
       {api.machine?.id ? (
         <>
-          <Button
-            className={`ml-2`}
-            size={"sm"}
-            onClick={() => setShowModelDrawer(true)}
-          >
+          <Button size={"sm"} onClick={() => setShowModelDrawer(true)}>
             Models
           </Button>
           <Button
             variant={"outline"}
             size={"sm"}
-            className={`ml-4`}
             style={{ backgroundColor: "#2F343F" }}
           >
             <HardDrive size={"16"} />
@@ -61,6 +57,7 @@ export default function ModelManagerTopbar({
       ) : (
         <p className="text-red-400">❓Select Machine</p>
       )}
+      <ShareButton />
     </Flex>
   );
 }

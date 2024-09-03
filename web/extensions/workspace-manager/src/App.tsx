@@ -2,14 +2,14 @@ import ReactDOM from "react-dom";
 import "./App.css";
 import WorkflowManagerTopbar from "./workflow-manager/WorkflowManagerTopbar";
 import { Suspense, lazy, useEffect, useState } from "react";
-import { waitForApp } from "./comfyapp";
+import { app, waitForApp } from "./comfyapp";
 import { ThemeProvider } from "./components/theme-provider";
 import JobManagerTopbar from "./model-manager/JobManagerTopbar";
 import { SWRConfig } from "swr";
 import { swrLocalStorageProvider } from "./utils/swrFetcher";
 import ProfileTopbar from "./user-manager/ProfileTopbar";
 import { Toaster } from "@/components/ui/toaster";
-import { ComfyUser } from "./type/dbTypes";
+import { ComfyUser, Workflow } from "./type/dbTypes";
 import Flex from "./components/ui/Flex";
 import { WorkspaceContext } from "./WorkspaceContext";
 const ModelManagerTopbar = lazy(
@@ -38,6 +38,12 @@ queueButtonDiv?.replaceWith(myQueueButtonDiv);
 function App() {
   const [finishLoading, setFinishLoading] = useState(false);
   const [user, setUser] = useState<ComfyUser & { balance?: string }>();
+  const [workflow, setWorkflow] = useState<
+    | (Workflow & {
+        path?: string;
+      })
+    | null
+  >(null);
 
   useEffect(() => {
     if (import.meta.env.DEV) {
@@ -46,6 +52,7 @@ function App() {
     }
     waitForApp().then(() => {
       setFinishLoading(true);
+      setWorkflow(app.dbWorkflow);
     });
 
     fetch("/api/user/getCurrentUser")
@@ -60,7 +67,9 @@ function App() {
   return (
     <SWRConfig value={{ provider: swrLocalStorageProvider }}>
       <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-        <WorkspaceContext.Provider value={{ user: user || null }}>
+        <WorkspaceContext.Provider
+          value={{ user: user || null, workflow, setWorkflow }}
+        >
           <div className="tailwind dark">
             {leftMenu &&
               ReactDOM.createPortal(<WorkflowManagerTopbar />, leftMenu)}

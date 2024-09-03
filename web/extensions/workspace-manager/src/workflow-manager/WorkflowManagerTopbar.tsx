@@ -1,28 +1,20 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { api, app } from "../comfyapp";
 import { Button } from "@/components/ui/button";
 import {
   IconFolder,
   IconPlus,
-  IconShare2,
   IconTriangleInvertedFilled,
   IconCategory,
 } from "@tabler/icons-react";
 import Flex from "@/components/ui/Flex";
 import AppFormTopbar from "@/app-form-manager/AppFormTopbar";
-import { ShareWorkflowDialog } from "./ShareWorkflowDialog";
-import { EWorkflowPrivacy, Workflow } from "@/type/dbTypes";
 import { getCurWorkflowID, setCurWorkflowID } from "@/utils";
 import SaveButton from "./SaveButton";
+import { WorkspaceContext } from "@/WorkspaceContext";
 
 export default function WorkflowManagerTopbar() {
-  const [workflow, setWorkflow] = useState<
-    | (Workflow & {
-        path?: string;
-      })
-    | null
-  >(app.dbWorkflow);
-  const [showShareDialog, setShowShareDialog] = useState(false);
+  const { setWorkflow, workflow } = useContext(WorkspaceContext);
   useEffect(() => {
     window.parent.postMessage(
       {
@@ -31,9 +23,6 @@ export default function WorkflowManagerTopbar() {
       },
       "*",
     );
-    // app?.workflowManager?.addEventListener("changeWorkflow", () => {
-    //   setWorkflow(app.workflowManager?.activeWorkflow);
-    // });
     api.addEventListener("workflowIDChanged", () => {
       const workflowID = getCurWorkflowID();
       console.log("🔗workflowIDChanged", workflowID);
@@ -52,46 +41,26 @@ export default function WorkflowManagerTopbar() {
 
   return (
     <Flex className="workflow-manager-topbar items-center gap-2">
-      <Button
-        size={"sm"}
-        className="gap-1"
-        variant={"secondary"}
-        onClick={() => {
-          window.parent.postMessage(
-            {
-              type: "show_overview",
-            },
-            "*",
-          );
-        }}
-      >
-        <IconCategory size={18} />
-        Overview
-      </Button>
+      {workflow && (
+        <Button
+          size={"sm"}
+          className="gap-1"
+          variant={"secondary"}
+          onClick={() => {
+            window.parent.postMessage(
+              {
+                type: "show_overview",
+              },
+              "*",
+            );
+          }}
+        >
+          <IconCategory size={18} />
+          Overview
+        </Button>
+      )}
 
       <AppFormTopbar />
-
-      <Button
-        size={"sm"}
-        onClick={() => {
-          if (!workflow) {
-            alert("Please save your workflow first! 👉 💾");
-            return;
-          }
-          setShowShareDialog(true);
-        }}
-        style={{ alignItems: "center" }}
-        variant={"secondary"}
-      >
-        {workflow?.privacy === EWorkflowPrivacy.UNLISTED ? (
-          " 🔗"
-        ) : workflow?.privacy === EWorkflowPrivacy.PUBLIC ? (
-          " 🌐"
-        ) : (
-          <IconShare2 size={18} />
-        )}{" "}
-        Share
-      </Button>
 
       <Button
         size={"sm"}
@@ -135,15 +104,6 @@ export default function WorkflowManagerTopbar() {
         </p>
       )}
       <SaveButton />
-      {showShareDialog && workflow && (
-        <ShareWorkflowDialog
-          onClose={() => setShowShareDialog(false)}
-          workflow={workflow}
-          onShared={(workflow) => {
-            setWorkflow(workflow);
-          }}
-        />
-      )}
     </Flex>
   );
 }
