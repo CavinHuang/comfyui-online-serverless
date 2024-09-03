@@ -26,13 +26,12 @@ export default function SaveButton() {
   const noWriteAccess = app.dbWorkflow && user?.id !== app.dbWorkflow.authorID;
 
   const onSave = async (isSaveAs = false) => {
-    setSaving(true);
     let fileName = app?.workflowManager?.activeWorkflow?.name;
     if (isSaveAs || !getCurWorkflowID() || noWriteAccess) {
       fileName = prompt("Please enter a name to save the workflow:", fileName);
       if (!fileName) return;
     }
-
+    setSaving(true);
     const res = await saveWorkflow({
       name: fileName,
       isSaveAs: isSaveAs || noWriteAccess,
