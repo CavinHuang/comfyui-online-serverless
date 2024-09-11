@@ -98,7 +98,9 @@ export function ShareWorkflowDialog({
             <Button
               variant={"outline"}
               onClick={() => {
-                navigator.clipboard.writeText(window.location.href);
+                navigator.clipboard.writeText(
+                  `${window.location.origin}/comfyui/${workflow.id}?machine=${workflow.machine_id}`,
+                );
                 toast({
                   title: "✅ Link copied",
                 });
