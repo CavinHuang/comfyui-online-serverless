@@ -7,12 +7,12 @@ def put_node_package_ddb(item):
     # requests.post('http://localhost:3000/api/node/putNodePackage', json=item, headers={'Authorization': 'Bearer ' + 'token'})
     # requests.post('http://127.0.0.1:6233/putNodePackage', json=item)
     print('🍻 item put_node_package_ddb',item)
-    logging.info('🍻 item put_node_package_ddb',item)
+    logging.info(f"🍻 item put_node_package_ddb => {item}")
 
 def put_node_ddb(item):
     # requests.post('http://127.0.0.1:6233/putNode', json=item)
     print('🍻 item put_node_ddb',item)
-    logging.info('🍻 item put_node_ddb',item)
+    logging.info(f"🍻 item put_node_ddb => {item}")
 ######v3
 
 def custom_serializer(obj):
@@ -44,6 +44,7 @@ def write_to_db_record(input_dict):
     nodes_count = len(NODE_CLASS_MAPPINGS) - len(prev_nodes)
 
     print('🍻 nodes_count',nodes_count, 'cur_node_package',cur_node_package)
+    logging.info(f"🍻 nodes_count => {nodes_count} cur_node_package => {cur_node_package}")
     if not os.path.isdir(module_path):
         return
     username, repo_name, default_branch_name, latest_commit = get_repo_user_and_name(module_path)
@@ -52,7 +53,7 @@ def write_to_db_record(input_dict):
     for name in NODE_CLASS_MAPPINGS:
         try:
             if name not in prev_nodes:
-                logging.info('🍻 name',name)
+                logging.info(f"🍻 name => {name}")
                 paths = analyze_class(NODE_CLASS_MAPPINGS[name])
                 # all_node = fetch_node_info()
                 node_def = node_info(input_dict, name)
@@ -64,11 +65,11 @@ def write_to_db_record(input_dict):
                     "gitRepo": username + '/' + repo_name,
                     "latestCommit": latest_commit}
                 print('🍻 node_def',node_def)
-                logging.info('🍻 node_def',node_def)
+                logging.info(f"🍻 node_def => {node_def}")
                 print('🍻 data',data)
-                logging.info('🍻 data',data)
+                logging.info(f"🍻 data => {data}")
                 print('🍻 name',name)
-                logging.info('🍻 name',name)
+                logging.info(f"🍻 name => {name}")
                 custom_node_defs[name] = node_def
                 if paths is not None and len(paths) > 0:
                     data['folderPaths'] = json.dumps(paths, default=custom_serializer)
