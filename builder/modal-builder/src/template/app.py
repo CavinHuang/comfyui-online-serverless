@@ -46,14 +46,14 @@ if not deploy_test:
         .apt_install("libgl1-mesa-glx", "libglib2.0-0")
         .run_commands(
             # Basic comfyui setup
-            "git clone https://github.com/comfyanonymous/ComfyUI.git /comfyui",
-            "cd /comfyui && pip install xformers!=0.0.18 -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cu121",
+            "git clone https://github.com/CavinHuang/comfyui-online-serverless.git /comfyui-online-serverless",
+            "cd /comfyui-online-serverless && pip install xformers!=0.0.18 -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cu121",
 
             # Install comfyui manager
-            "cd /comfyui/custom_nodes && git clone https://github.com/ltdrdata/ComfyUI-Manager.git",
-            "cd /comfyui/custom_nodes/ComfyUI-Manager && git reset --hard 9c86f62b912f4625fe2b929c7fc61deb9d16f6d3",
-            "cd /comfyui/custom_nodes/ComfyUI-Manager && pip install -r requirements.txt",
-            "cd /comfyui/custom_nodes/ComfyUI-Manager && mkdir startup-scripts",
+            "cd /comfyui-online-serverless/custom_nodes && git clone https://github.com/ltdrdata/ComfyUI-Manager.git",
+            "cd /comfyui-online-serverless/custom_nodes/ComfyUI-Manager && git reset --hard 9c86f62b912f4625fe2b929c7fc61deb9d16f6d3",
+            "cd /comfyui-online-serverless/custom_nodes/ComfyUI-Manager && pip install -r requirements.txt",
+            "cd /comfyui-online-serverless/custom_nodes/ComfyUI-Manager && mkdir startup-scripts",
         )
         # .run_commands(
         #     # Install comfy deploy
@@ -66,7 +66,7 @@ if not deploy_test:
 
         # Restore the custom nodes first
         .copy_local_file(f"{current_directory}/data/restore_snapshot.py", "/")
-        .copy_local_file(f"{current_directory}/data/snapshot.json", "/comfyui/custom_nodes/ComfyUI-Manager/startup-scripts/restore-snapshot.json")
+        .copy_local_file(f"{current_directory}/data/snapshot.json", "/comfyui-online-serverless/custom_nodes/ComfyUI-Manager/startup-scripts/restore-snapshot.json")
         .run_commands("python restore_snapshot.py")
 
         # Then install the models
@@ -166,7 +166,7 @@ def run(input: Input):
 
     command = ["python", "main.py",
                "--disable-auto-launch", "--disable-metadata"]
-    server_process = subprocess.Popen(command, cwd="/comfyui")
+    server_process = subprocess.Popen(command, cwd="/comfyui-online-serverless")
 
     check_server(
         f"http://{COMFY_HOST}",
@@ -261,7 +261,7 @@ def spawn_comfyui_in_background():
             "--port",
             PORT,
         ],
-        cwd="/comfyui",
+        cwd="/comfyui-online-serverless",
     )
 
     # Poll until webserver accepts connections before running inputs.

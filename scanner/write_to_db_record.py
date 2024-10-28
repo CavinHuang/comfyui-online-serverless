@@ -1,14 +1,15 @@
-import os 
+import os
 import json
 import requests
 
 def put_node_package_ddb(item):
     # requests.post('http://localhost:3000/api/node/putNodePackage', json=item, headers={'Authorization': 'Bearer ' + 'token'})
-    requests.post('http://127.0.0.1:6233/putNodePackage', json=item)
+    # requests.post('http://127.0.0.1:6233/putNodePackage', json=item)
+    print('🍻 item put_node_package_ddb',item)
 
 def put_node_ddb(item):
-    requests.post('http://127.0.0.1:6233/putNode', json=item)
-
+    # requests.post('http://127.0.0.1:6233/putNode', json=item)
+    print('🍻 item put_node_ddb',item)
 ######v3
 
 def custom_serializer(obj):
@@ -26,7 +27,7 @@ from decimal import Decimal
 import time
 from  scanner.analyze_node_input import analyze_class
 
-def write_to_db_record(input_dict): 
+def write_to_db_record(input_dict):
     time_before = input_dict['time_before']
     import_time = time.perf_counter() - time_before
     NODE_CLASS_MAPPINGS = input_dict['NODE_CLASS_MAPPINGS']
@@ -38,7 +39,7 @@ def write_to_db_record(input_dict):
     if 'ComfyUI-Manager' in module_path:
         return
     nodes_count = len(NODE_CLASS_MAPPINGS) - len(prev_nodes)
-    
+
     print('🍻 nodes_count',nodes_count, 'cur_node_package',cur_node_package)
     if not os.path.isdir(module_path):
         return
@@ -47,17 +48,20 @@ def write_to_db_record(input_dict):
     custom_node_defs = {}
     for name in NODE_CLASS_MAPPINGS:
         try:
-            if name not in prev_nodes: 
+            if name not in prev_nodes:
                 paths = analyze_class(NODE_CLASS_MAPPINGS[name])
                 # all_node = fetch_node_info()
                 node_def = node_info(input_dict, name)
                 data = {
                     "id": name+"~"+packageID,
-                    "nodeType": name, 
-                    "nodeDef": json.dumps(node_def), 
+                    "nodeType": name,
+                    "nodeDef": json.dumps(node_def),
                     "packageID": packageID,
                     "gitRepo": username + '/' + repo_name,
                     "latestCommit": latest_commit}
+                print('🍻 node_def',node_def)
+                print('🍻 data',data)
+                print('🍻 name',name)
                 custom_node_defs[name] = node_def
                 if paths is not None and len(paths) > 0:
                     data['folderPaths'] = json.dumps(paths, default=custom_serializer)
@@ -82,13 +86,13 @@ def write_to_db_record(input_dict):
 # For COMFYUI BASE NODES
 def save_base_nodes_to_ddb(NODE_CLASS_MAPPINGS):
     baseNodeDefs = {}
-    for name in NODE_CLASS_MAPPINGS: 
+    for name in NODE_CLASS_MAPPINGS:
         paths = analyze_class(NODE_CLASS_MAPPINGS[name])
         node_def = node_info(name)
         data = {
             "id": name+"~"+'comfyanonymous_ComfyUI',
-            "nodeType": name, 
-            "nodeDef": json.dumps(node_def), 
+            "nodeType": name,
+            "nodeDef": json.dumps(node_def),
             "packageID": 'comfyanonymous_ComfyUI',
             "gitRepo": 'comfyanonymous/ComfyUI'}
         baseNodeDefs[name] = node_def
@@ -137,7 +141,7 @@ from urllib.error import URLError, HTTPError
 
 def fetch_node_info():
     url = "http://localhost:8188/object_info"
-    
+
     try:
         with urlopen(url) as response:
             if response.status == 200:
