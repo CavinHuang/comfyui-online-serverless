@@ -6,12 +6,13 @@ import folder_paths
 
 def analyze_class(cls):
     input_types_method = getattr(cls, 'INPUT_TYPES', None)
+    print('🍻 input_types_method',input_types_method)
     if input_types_method:
         class_name = cls.__name__  # Capture the class name
         source = inspect.getsource(input_types_method)
         dedented_source = textwrap.dedent(source)
         parsed_code = ast.parse(dedented_source)
-        
+
         # Initialize a container for calls
         calls = []
 
@@ -35,7 +36,7 @@ def analyze_class(cls):
         # Extract calls from the INPUT_TYPES method
         for node in ast.walk(parsed_code):
             extract_calls_from_dict(node)
-        
+
         # Print the results
         mo_paths={}
         print(f'👍class {class_name}')

@@ -10,6 +10,7 @@ def put_node_package_ddb(item):
 def put_node_ddb(item):
     # requests.post('http://127.0.0.1:6233/putNode', json=item)
     print('🍻 item put_node_ddb',item)
+
 ######v3
 
 def custom_serializer(obj):
