@@ -8,7 +8,7 @@ import logging
 def analyze_class(cls):
     input_types_method = getattr(cls, 'INPUT_TYPES', None)
     print('🍻 input_types_method',input_types_method)
-    logging.info("🍻 input_types_method {input_types_method}")
+    logging.info("🍻 input_types_method %s", input_types_method)
     if input_types_method:
         class_name = cls.__name__  # Capture the class name
         source = inspect.getsource(input_types_method)
@@ -42,7 +42,6 @@ def analyze_class(cls):
         # Print the results
         mo_paths={}
         print(f'👍class {class_name}')
-        logging.info(f'👍class {class_name}')
         for key_name, param in calls:
             try:
                 print(f'{key_name} ==> {param}')
@@ -56,10 +55,10 @@ def analyze_class(cls):
                     'folder_name':stripped_param,
                 }
             except Exception as e:
+                print('❌Error adding path: %s',e)
                 return f"Error adding path: {e}"
         ret = custom_serializer(mo_paths)
         print('111111111paths',ret)
-        logging.info(f'111111111paths => {ret}')
         return ret
 
 def fix_paths(paths):

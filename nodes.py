@@ -1957,7 +1957,7 @@ def load_custom_nodes():
                 'success': success,
                 'time_before': time_before
             }
-            logging.info("🍻 input_dict %s", input_dict)
+            # logging.info("🍻 input_dict %s", input_dict)
             write_to_db_record(input_dict)
 
     if len(node_import_times) > 0:

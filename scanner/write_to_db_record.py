@@ -6,13 +6,41 @@ import logging
 def put_node_package_ddb(item):
     # requests.post('http://localhost:3000/api/node/putNodePackage', json=item, headers={'Authorization': 'Bearer ' + 'token'})
     # requests.post('http://127.0.0.1:6233/putNodePackage', json=item)
-    print('🍻 item put_node_package_ddb',item)
-    logging.info(f"🍻 item put_node_package_ddb => {item}")
+    # print('🍻 item put_node_package_ddb',item)
+    # logging.info(f"🍻 item put_node_package_ddb => {item}")
+    postData = {
+      "packageID": item['id'],
+      "gitRepo": item['gitRepo'],
+      "nodeDefs": item['nodeDefs'],
+      "nameID": item['nameID'],
+      "latestCommit": item['latestCommit']
+    }
+    res = requests.post('http://localhost:3000/api/comfy/plugins/node-def', json=postData, headers={'Authorization': 'Bearer ' + 'token'})
+    print('🍻 res put_node_package_ddb',res)
+    logging.info(f"🍻 res put_node_package_ddb => {res}")
 
 def put_node_ddb(item):
     # requests.post('http://127.0.0.1:6233/putNode', json=item)
-    print('🍻 item put_node_ddb',item)
-    logging.info(f"🍻 item put_node_ddb => {item}")
+    # print('🍻 item put_node_ddb',item)
+    # logging.info(f"🍻 item put_node_ddb => {item}")
+
+    folderPaths = []
+    if 'folderPaths' in item:
+      folderPaths = item['folderPaths']
+
+    postData = {
+      "packName": item['packName'],
+      "nodeName": item['nodeType'],
+      "nodeID": item['id'],
+      "nodeType": item['nodeType'],
+      "nodeDef": item['nodeDef'],
+      "folderPaths": folderPaths,
+      "latestCommit": item['latestCommit']
+    }
+    res = requests.post('http://localhost:3000/api/comfy/nodes/node-def', json=postData, headers={'Authorization': 'Bearer ' + 'token'})
+    print('🍻 res put_node_ddb',res)
+    logging.info(f"🍻 res put_node_ddb => {res}")
+
 ######v3
 
 def custom_serializer(obj):
@@ -53,23 +81,18 @@ def write_to_db_record(input_dict):
     for name in NODE_CLASS_MAPPINGS:
         try:
             if name not in prev_nodes:
-                logging.info(f"🍻 name => {name}")
+                logging.info(f"🍻 +++++++++name => {name}")
                 paths = analyze_class(NODE_CLASS_MAPPINGS[name])
                 # all_node = fetch_node_info()
                 node_def = node_info(input_dict, name)
                 data = {
                     "id": name+"~"+packageID,
+                    "packName": repo_name,
                     "nodeType": name,
                     "nodeDef": json.dumps(node_def),
                     "packageID": packageID,
                     "gitRepo": username + '/' + repo_name,
                     "latestCommit": latest_commit}
-                print('🍻 node_def',node_def)
-                logging.info(f"🍻 node_def => {node_def}")
-                print('🍻 data',data)
-                logging.info(f"🍻 data => {data}")
-                print('🍻 name',name)
-                logging.info(f"🍻 name => {name}")
                 custom_node_defs[name] = node_def
                 if paths is not None and len(paths) > 0:
                     data['folderPaths'] = json.dumps(paths, default=custom_serializer)
