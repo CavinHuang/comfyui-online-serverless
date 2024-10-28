@@ -2,11 +2,13 @@ import ast
 import inspect
 import textwrap  # Ensure this line is added at the top of your script
 import folder_paths
+import logging
 
 
 def analyze_class(cls):
     input_types_method = getattr(cls, 'INPUT_TYPES', None)
     print('🍻 input_types_method',input_types_method)
+    logging.info('🍻 input_types_method',input_types_method)
     if input_types_method:
         class_name = cls.__name__  # Capture the class name
         source = inspect.getsource(input_types_method)
@@ -40,12 +42,14 @@ def analyze_class(cls):
         # Print the results
         mo_paths={}
         print(f'👍class {class_name}')
+        logging.info(f'👍class {class_name}')
         for key_name, param in calls:
             try:
                 print(f'{key_name} ==> {param}')
                 stripped_param = param.strip("\"'")
                 abs_path  = folder_paths.folder_names_and_paths.get(stripped_param, None)
                 print('abs_path',abs_path)
+                logging.info('abs_path',abs_path)
                 relative_string = fix_paths(abs_path[0])
                 mo_paths[key_name] = {
                     'abs_path':[relative_string, abs_path[1]],
@@ -55,6 +59,7 @@ def analyze_class(cls):
                 return f"Error adding path: {e}"
         ret = custom_serializer(mo_paths)
         print('111111111paths',ret)
+        logging.info('111111111paths',ret)
         return ret
 
 def fix_paths(paths):
