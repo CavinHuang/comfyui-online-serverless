@@ -38,6 +38,8 @@ jobs:
             fi
           done < .env
 
+      - name: Check env & build
+        run: |
           echo "Checking environment variables:"
           echo "NEXT_PUBLIC_APP_URL: ${{ env.NEXT_PUBLIC_APP_URL }}"
           echo "NEXTAUTH_URL: ${{ env.NEXTAUTH_URL }}"
