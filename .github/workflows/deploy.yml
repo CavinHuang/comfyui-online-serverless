@@ -14,21 +14,8 @@ jobs:
       # 拉取main分支代码
       - name: Checkout
         uses: actions/checkout@v2
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
-
-      - name: Cache Docker layers
-        uses: actions/cache@v2
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
-
       - name: Set github_env
         run: echo "GITHUB_SHA_SHORT=$(echo $GITHUB_SHA | cut -c 1-6)" >> $GITHUB_ENV
-
       # 制作docker镜像并推送到镜像服务
       - name: Build and push docker image
         run: |
@@ -42,7 +29,6 @@ jobs:
               echo "$line" >> $GITHUB_ENV
             fi
           done < .env
-
       - name: Set env
         run: |
           # 将REGISTRY_REPO添加到GITHUB_ENV，后续通过$xxx引用
@@ -58,21 +44,10 @@ jobs:
           echo ${DOCKER_REGISTRY_PASSWORD} | docker login ${DOCKER_REGISTRY_MIRROR} --username ${DOCKER_REGISTRY_USER} --password-stdin
           # 部分项目编译时需要环境变量 comfyui-nodes-docs-site/prod/.env
           # 构建镜像
-          docker buildx build \
-            --cache-from type=local,src=/tmp/.buildx-cache \
-            --cache-to type=local,dest=/tmp/.buildx-cache-new \
-            -f builder/Dockerfile \
-            -t ${APP_NAME} \
-            -t ${APP_NAME}:${{ env.GITHUB_SHA_SHORT }} \
-            -t $REGISTRY_REPO \
-            -t $REGISTRY_REPO:${{ env.GITHUB_SHA_SHORT }} \
-            .
+          docker image build -f builder/Dockerfile -t ${APP_NAME} -t ${APP_NAME}:${{ env.GITHUB_SHA_SHORT }} -t $REGISTRY_REPO -t $REGISTRY_REPO:${{ env.GITHUB_SHA_SHORT }} .
+          # 推送镜像
           docker push --all-tags $REGISTRY_REPO
-          # 清理缓存
-          rm -rf /tmp/.buildx-cache
-          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
           docker logout
-
       # https://github.com/marketplace/actions/ssh-remote-commands
       # 远程机器自动部署，因为是远程机器，所以这里环境变量需要重新设置
       - name: deploy
