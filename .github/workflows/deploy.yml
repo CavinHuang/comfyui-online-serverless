@@ -31,6 +31,8 @@ jobs:
             # 跳过空行和注释行
             if [[ -n "$line" && ! "$line" =~ ^[[:space:]]*# ]]; then
               # 将变量添加到 GITHUB_ENV
+              echo "=========="
+              echo "$line"
               echo "$line" >> $GITHUB_ENV
               echo "Added: $line"
             fi
