@@ -52,19 +52,25 @@ jobs:
       # 远程机器自动部署，因为是远程机器，所以这里环境变量需要重新设置
       - name: deploy
         uses: appleboy/ssh-action@v1.0.3
-        env:
-          REGISTRY_MIRROR: ${{ vars.DOCKER_REGISTRY_MIRROR }}
-          REGISTRY_USER: ${{ vars.DOCKER_REGISTRY_USER }}
-          REGISTRY_PASSWORD: ${{ vars.DOCKER_REGISTRY_PASSWORD }}
-          APP_NAME: ${{ vars.APP_NAME }}
-          REGISTRY_REPO: ${{ vars.DOCKER_REGISTRY_MIRROR }}/${{ vars.DOCKER_REGISTRY_NAMESPACE }}/${{ vars.APP_NAME }}
-          DIR_APP: /projects/repo/${{ vars.APP_NAME }}
+        # env:
+        #   REGISTRY_MIRROR: ${{ vars.DOCKER_REGISTRY_MIRROR }}
+        #   REGISTRY_USER: ${{ vars.DOCKER_REGISTRY_USER }}
+        #   REGISTRY_PASSWORD: ${{ vars.DOCKER_REGISTRY_PASSWORD }}
+        #   APP_NAME: ${{ vars.APP_NAME }}
+        #   REGISTRY_REPO: ${{ vars.DOCKER_REGISTRY_MIRROR }}/${{ vars.DOCKER_REGISTRY_NAMESPACE }}/${{ vars.APP_NAME }}
+        #   DIR_APP: /projects/repo/${{ vars.APP_NAME }}
+        run: |
+          echo "Checking environment variables:"
+          echo "APP_NAME: ${{ APP_NAME }}"
+          echo "REGISTRY_REPO: ${{ REGISTRY_REPO }}"
+          echo "REGISTRY_MIRROR: ${{ DOCKER_REGISTRY_MIRROR }}"
+          echo "REGISTRY_USER: ${{ DOCKER_REGISTRY_USER }}"
         with:
           host: ${{ vars.HOST }}
           username: ${{ vars.USER }}
           key: ${{ secrets.KEY }}
           # 通过在env声明+envs export，后续可以直接$xxx调用；后续亦可继续使用 ${{vars.xxx}} 和 ${{secrets.xxx}}
-          envs: APP_NAME,REGISTRY_REPO,REGISTRY_MIRROR,REGISTRY_PASSWORD,REGISTRY_USER,DIR_APP
+          # envs: APP_NAME,REGISTRY_REPO,REGISTRY_MIRROR,REGISTRY_PASSWORD,REGISTRY_USER,DIR_APP
           script: |
             mkdir -p ${DIR_APP} && cd ${DIR_APP}
             echo -e "setup ${APP_NAME} from ${REGISTRY_REPO}"
