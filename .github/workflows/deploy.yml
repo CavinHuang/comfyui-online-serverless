@@ -49,25 +49,25 @@ jobs:
           docker logout
       # https://github.com/marketplace/actions/ssh-remote-commands
       # 远程机器自动部署，因为是远程机器，所以这里环境变量需要重新设置
-      # - name: deploy
-      #   uses: appleboy/ssh-action@v1.0.3
-      #   env:
-      #     REGISTRY_MIRROR: ${{ vars.REGISTRY_MIRROR }}
-      #     REGISTRY_USER: ${{ vars.REGISTRY_USER }}
-      #     REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
-      #     APP_NAME: ${{ vars.APP_NAME }}
-      #     REGISTRY_REPO: ${{ vars.REGISTRY_MIRROR }}/${{ vars.REGISTRY_NAMESPACE }}/${{ vars.APP_NAME }}
-      #     DIR_APP: /projects/repo/${{ vars.APP_NAME }}
-      #   with:
-      #     host: ${{ vars.HOST }}
-      #     username: ${{ vars.USER }}
-      #     key: ${{ secrets.KEY }}
-      #     # 通过在env声明+envs export，后续可以直接$xxx调用；后续亦可继续使用 ${{vars.xxx}} 和 ${{secrets.xxx}}
-      #     envs: APP_NAME,REGISTRY_REPO,REGISTRY_MIRROR,REGISTRY_PASSWORD,REGISTRY_USER,DIR_APP
-      #     script: |
-      #       mkdir -p ${DIR_APP} && cd ${DIR_APP}
-      #       echo -e "setup ${APP_NAME} from ${REGISTRY_REPO}"
-      #       echo ${REGISTRY_PASSWORD} | docker login ${REGISTRY_MIRROR} --username ${REGISTRY_USER} --password-stdin
+      - name: deploy
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          REGISTRY_MIRROR: ${{ vars.DOCKER_REGISTRY_MIRROR }}
+          REGISTRY_USER: ${{ vars.DOCKER_REGISTRY_USER }}
+          REGISTRY_PASSWORD: ${{ vars.DOCKER_REGISTRY_PASSWORD }}
+          APP_NAME: ${{ vars.APP_NAME }}
+          REGISTRY_REPO: ${{ vars.REGISTRY_MIRROR }}/${{ vars.REGISTRY_NAMESPACE }}/${{ vars.APP_NAME }}
+          DIR_APP: /projects/repo/${{ vars.APP_NAME }}
+        with:
+          host: ${{ vars.HOST }}
+          username: ${{ vars.USER }}
+          key: ${{ secrets.KEY }}
+          # 通过在env声明+envs export，后续可以直接$xxx调用；后续亦可继续使用 ${{vars.xxx}} 和 ${{secrets.xxx}}
+          envs: APP_NAME,REGISTRY_REPO,REGISTRY_MIRROR,REGISTRY_PASSWORD,REGISTRY_USER,DIR_APP
+          script: |
+            mkdir -p ${DIR_APP} && cd ${DIR_APP}
+            echo -e "setup ${APP_NAME} from ${REGISTRY_REPO}"
+            echo ${REGISTRY_PASSWORD} | docker login ${REGISTRY_MIRROR} --username ${REGISTRY_USER} --password-stdin
       #       # 清理已存在的容器和镜像
       #       docker rm -f ${APP_NAME} && docker rmi ${REGISTRY_REPO}:latest
       #       # 同步环境变量
