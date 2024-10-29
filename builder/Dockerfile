@@ -35,7 +35,8 @@ WORKDIR /app/comfyui-online-serverless/custom_nodes
 
 # RUN cd ../
 RUN git clone --depth 1 https://github.com/M1kep/Comfy_KepKitchenSink.git
-# RUN cd Comfy_KepKitchenSink && pip3 install -r requirements.txt
+# 如果有requirements.txt，则安装
+RUN cd Comfy_KepKitchenSink && if [ -f requirements.txt ]; then pip3 install -r requirements.txt; fi
 
 RUN cd /app/comfyui-online-serverless
 
