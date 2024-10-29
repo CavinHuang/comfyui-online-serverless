@@ -59,12 +59,6 @@ jobs:
         #   APP_NAME: ${{ vars.APP_NAME }}
         #   REGISTRY_REPO: ${{ vars.DOCKER_REGISTRY_MIRROR }}/${{ vars.DOCKER_REGISTRY_NAMESPACE }}/${{ vars.APP_NAME }}
         #   DIR_APP: /projects/repo/${{ vars.APP_NAME }}
-        run: |
-          echo "Checking environment variables:"
-          echo "APP_NAME: ${{ APP_NAME }}"
-          echo "REGISTRY_REPO: ${{ REGISTRY_REPO }}"
-          echo "REGISTRY_MIRROR: ${{ DOCKER_REGISTRY_MIRROR }}"
-          echo "REGISTRY_USER: ${{ DOCKER_REGISTRY_USER }}"
         with:
           host: ${{ vars.HOST }}
           username: ${{ vars.USER }}
@@ -72,6 +66,16 @@ jobs:
           # 通过在env声明+envs export，后续可以直接$xxx调用；后续亦可继续使用 ${{vars.xxx}} 和 ${{secrets.xxx}}
           # envs: APP_NAME,REGISTRY_REPO,REGISTRY_MIRROR,REGISTRY_PASSWORD,REGISTRY_USER,DIR_APP
           script: |
+            echo "Checking environment variables:"
+            echo "APP_NAME: ${{ env.APP_NAME }}"
+            echo "REGISTRY_REPO: ${{ env.REGISTRY_REPO }}"
+            echo "REGISTRY_MIRROR: ${{ env.DOCKER_REGISTRY_MIRROR }}"
+            echo "REGISTRY_USER: ${{ env.DOCKER_REGISTRY_USER }}"
+            echo "================================================"
+            echo "APP_NAME: ${{ APP_NAME }}"
+            echo "REGISTRY_REPO: ${{ REGISTRY_REPO }}"
+            echo "REGISTRY_MIRROR: ${{ DOCKER_REGISTRY_MIRROR }}"
+            echo "REGISTRY_USER: ${{ DOCKER_REGISTRY_USER }}"
             mkdir -p ${DIR_APP} && cd ${DIR_APP}
             echo -e "setup ${APP_NAME} from ${REGISTRY_REPO}"
             echo ${REGISTRY_PASSWORD} | docker login ${REGISTRY_MIRROR} --username ${REGISTRY_USER} --password-stdin
