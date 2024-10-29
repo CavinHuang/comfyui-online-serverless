@@ -67,11 +67,6 @@ jobs:
           # envs: APP_NAME,REGISTRY_REPO,REGISTRY_MIRROR,REGISTRY_PASSWORD,REGISTRY_USER,DIR_APP
           script: |
             echo "Checking environment variables:"
-            echo "APP_NAME: ${{ env.APP_NAME }}"
-            echo "REGISTRY_REPO: ${{ env.REGISTRY_REPO }}"
-            echo "REGISTRY_MIRROR: ${{ env.DOCKER_REGISTRY_MIRROR }}"
-            echo "REGISTRY_USER: ${{ env.DOCKER_REGISTRY_USER }}"
-            echo "================================================"
             echo "APP_NAME: ${{ APP_NAME }}"
             echo "REGISTRY_REPO: ${{ REGISTRY_REPO }}"
             echo "REGISTRY_MIRROR: ${{ DOCKER_REGISTRY_MIRROR }}"
