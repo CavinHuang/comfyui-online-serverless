@@ -66,7 +66,8 @@ jobs:
             -t ${APP_NAME}:${{ env.GITHUB_SHA_SHORT }} \
             -t $REGISTRY_REPO \
             -t $REGISTRY_REPO:${{ env.GITHUB_SHA_SHORT }} \
-            --push .
+            .
+          docker push --all-tags $REGISTRY_REPO
           # 清理缓存
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
