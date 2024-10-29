@@ -55,9 +55,9 @@ jobs:
           REGISTRY_MIRROR: ${{ vars.DOCKER_REGISTRY_MIRROR }}
           REGISTRY_USER: ${{ vars.DOCKER_REGISTRY_USER }}
           REGISTRY_PASSWORD: ${{ vars.DOCKER_REGISTRY_PASSWORD }}
-          APP_NAME: ${{ vars.APP_NAME }}
-          REGISTRY_REPO: ${{ vars.REGISTRY_MIRROR }}/${{ vars.REGISTRY_NAMESPACE }}/${{ vars.APP_NAME }}
-          DIR_APP: /projects/repo/${{ vars.APP_NAME }}
+          APP_NAME: ${{ APP_NAME }}
+          REGISTRY_REPO: ${{ vars.DOCKER_REGISTRY_MIRROR }}/${{ vars.DOCKER_REGISTRY_NAMESPACE }}/${{ APP_NAME }}
+          DIR_APP: /projects/repo/${{ APP_NAME }}
         with:
           host: ${{ vars.HOST }}
           username: ${{ vars.USER }}
