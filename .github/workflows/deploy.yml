@@ -6,6 +6,7 @@ on:
 
 jobs:
   deploy-app:
+    timeout-minutes: 30
     runs-on: ubuntu-latest
     # 后续step(非远程机器)可以通过${{env.xxx}}或者$xxx引用，否则通过 ${{vars.xx}} 或者 ${{secrets.xx}}，可选
     env:
