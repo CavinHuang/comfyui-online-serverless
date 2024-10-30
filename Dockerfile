@@ -45,6 +45,14 @@ RUN if [ -n "${CUSTOM_NODES_REPO}" ] && [ -n "${CUSTOM_NODES_DIR}" ]; then \
     fi; \
     fi
 
+# 清理阶段 - 添加一个新的阶段专门用于清理
+FROM builder as cleaner
+RUN find /usr/local/lib/python3.11/site-packages -name "*.pyc" -delete && \
+    find /usr/local/lib/python3.11/site-packages -name "__pycache__" -delete && \
+    find /app -name "*.pyc" -delete && \
+    find /app -name "__pycache__" -delete && \
+    rm -rf /app/.git /app/.github /app/tests /app/docs
+
 
 # 最终阶段
 FROM python:3.11-slim
