@@ -28,11 +28,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2  # 使用 Buildx 获得更好的构建性能
 
-      - name: Set variables
-        run: |
-          echo "GITHUB_SHA_SHORT=$(echo $GITHUB_SHA | cut -c 1-6)" >> $GITHUB_ENV
-          echo "REGISTRY_REPO=${DOCKER_REGISTRY_MIRROR}/${DOCKER_REGISTRY_NAMESPACE}/${APP_NAME}" >> $GITHUB_ENV
-
       - name: Load environment variables
         run: |
           # 下载并处理环境变量文件
@@ -41,6 +36,11 @@ jobs:
 
           # 使用 grep 过滤注释和空行，更高效的处理
           grep -v '^#\|^$' .env >> $GITHUB_ENV
+
+      - name: Set variables
+        run: |
+          echo "GITHUB_SHA_SHORT=$(echo $GITHUB_SHA | cut -c 1-6)" >> $GITHUB_ENV
+          echo "REGISTRY_REPO=${DOCKER_REGISTRY_MIRROR}/${DOCKER_REGISTRY_NAMESPACE}/${APP_NAME}" >> $GITHUB_ENV
 
       - name: Login to Docker Registry
         uses: docker/login-action@v2  # 使用官方 action 登录
