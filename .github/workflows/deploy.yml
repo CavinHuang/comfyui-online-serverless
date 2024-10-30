@@ -53,6 +53,8 @@ jobs:
         run: |
           echo "GITHUB_SHA_SHORT=$(echo $GITHUB_SHA | cut -c 1-6)" >> $GITHUB_ENV
           echo "REGISTRY_REPO=${DOCKER_REGISTRY_MIRROR}/${DOCKER_REGISTRY_NAMESPACE}/${APP_NAME}" >> $GITHUB_ENV
+          echo "CUSTOM_NODES_REPO=${{ github.event.inputs.CUSTOM_NODES_REPO }}" >> $GITHUB_ENV
+          echo "CUSTOM_NODES_DIR=${{ github.event.inputs.CUSTOM_NODES_DIR }}" >> $GITHUB_ENV
 
       - name: Login to Docker Registry
         uses: docker/login-action@v2  # 使用官方 action 登录
