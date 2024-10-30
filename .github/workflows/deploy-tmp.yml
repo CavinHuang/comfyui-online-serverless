@@ -12,13 +12,13 @@ on:
         description: "Custom nodes directory"
         required: true
 
-  # push:
-  #   # push到主分支启用CD，根据实际情况更改
-  #   branches: [online]
-  #   paths-ignore:    # 添加忽略路径，避免不必要的构建
-  #     - '**.md'
-  #     - '.gitignore'
-  #     - 'LICENSE'
+  push:
+    # push到主分支启用CD，根据实际情况更改
+    branches: [online]
+    paths-ignore:    # 添加忽略路径，避免不必要的构建
+      - '**.md'
+      - '.gitignore'
+      - 'LICENSE'
 
 jobs:
   deploy-tmp-app:
