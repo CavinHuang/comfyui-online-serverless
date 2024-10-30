@@ -4,6 +4,17 @@ ARG CUSTOM_NODES_DIR
 
 FROM python:3.11
 
+# 重新声明构建参数，确保在 FROM 之后可用
+ARG CUSTOM_NODES_REPO
+ARG CUSTOM_NODES_DIR
+
+# 将参数转换为环境变量，确保在 RUN 命令中可用
+ENV CUSTOM_NODES_REPO=${CUSTOM_NODES_REPO}
+ENV CUSTOM_NODES_DIR=${CUSTOM_NODES_DIR}
+
+RUN echo "Debug: CUSTOM_NODES_REPO=${CUSTOM_NODES_REPO}" && \
+    echo "Debug: CUSTOM_NODES_DIR=${CUSTOM_NODES_DIR}"
+
 RUN apt-get update && apt-get install -y \
     git \
     wget
