@@ -1,5 +1,17 @@
 name: deployment
 on:
+
+  workflow_dispatch:
+    inputs:
+      CUSTOM_NODES_REPO:
+        type: string
+        description: "Custom nodes repository"
+        required: true
+      CUSTOM_NODES_DIR:
+        type: string
+        description: "Custom nodes directory"
+        required: true
+
   push:
     # push到主分支启用CD，根据实际情况更改
     branches: [online]
