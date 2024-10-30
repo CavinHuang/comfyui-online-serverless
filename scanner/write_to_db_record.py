@@ -15,7 +15,7 @@ def put_node_package_ddb(item):
       "nameID": item['nameID'],
       "latestCommit": item['latestCommit']
     }
-    res = requests.post('http://localhost:3000/api/comfy/plugins/node-def', json=postData, headers={'Authorization': 'Bearer ' + 'token'})
+    res = requests.post('https://comfydocs.site/api/comfy/plugins/node-def', json=postData, headers={'Authorization': 'Bearer ' + 'token'})
     print('🍻 res put_node_package_ddb',res)
     logging.info(f"🍻 res put_node_package_ddb => {res}")
 
@@ -37,7 +37,7 @@ def put_node_ddb(item):
       "folderPaths": folderPaths,
       "latestCommit": item['latestCommit']
     }
-    res = requests.post('http://localhost:3000/api/comfy/nodes/node-def', json=postData, headers={'Authorization': 'Bearer ' + 'token'})
+    res = requests.post('https://comfydocs.site/api/comfy/nodes/node-def', json=postData, headers={'Authorization': 'Bearer ' + 'token'})
     print('🍻 res put_node_ddb',res)
     logging.info(f"🍻 res put_node_ddb => {res}")
 

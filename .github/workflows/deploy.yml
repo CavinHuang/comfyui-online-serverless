@@ -56,6 +56,9 @@ jobs:
           context: .
           file: builder/Dockerfile
           push: true
+          args: |
+            CUSTOM_NODES_REPO=${{ env.CUSTOM_NODES_REPO }}
+            CUSTOM_NODES_DIR=${{ env.CUSTOM_NODES_DIR }}
           tags: |
             ${{ env.REGISTRY_REPO }}:latest
             ${{ env.REGISTRY_REPO }}:${{ env.GITHUB_SHA_SHORT }}
