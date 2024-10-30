@@ -51,15 +51,14 @@ jobs:
           username: ${{ env.DOCKER_REGISTRY_USER }}
           password: ${{ env.DOCKER_REGISTRY_PASSWORD }}
 
-      - steps:
-        # 添加镜像层缓存
-        - name: Cache Docker layers
-          uses: actions/cache@v3
-          with:
-            path: /tmp/.buildx-cache
-            key: ${{ runner.os }}-buildx-${{ github.sha }}
-            restore-keys: |
-              ${{ runner.os }}-buildx-
+      # 添加镜像层缓存
+      - name: Cache Docker layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
 
       # 制作docker镜像并推送到镜像服务
       - name: Build and push Docker image
