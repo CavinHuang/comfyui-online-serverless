@@ -24,17 +24,14 @@ RUN pip3 install -r requirements.txt
 
 WORKDIR /app/comfyui-online-serverless/custom_nodes
 
-# 在 FROM 之后重新声明 ARG
-ARG CUSTOM_NODES_REPO
-
 # 添加调试信息和错误处理
 RUN echo "Cloning from: ${CUSTOM_NODES_REPO}" && \
-    git clone --depth 1 "${CUSTOM_NODES_REPO}" || \
+    git clone --depth 1 ${CUSTOM_NODES_REPO} || \
     (echo "Failed to clone custom nodes repository" && git --version && exit 1)
 
 # 修改目录检查和安装依赖的逻辑
-RUN if [ -d "${CUSTOM_NODES_DIR}" ]; then \
-        cd "${CUSTOM_NODES_DIR}" && \
+RUN if [ -d ${CUSTOM_NODES_DIR} ]; then \
+        cd ${CUSTOM_NODES_DIR} && \
         if [ -f requirements.txt ]; then \
             pip3 install -r requirements.txt; \
         fi \
