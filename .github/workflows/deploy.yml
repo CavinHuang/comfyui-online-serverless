@@ -1,24 +1,12 @@
 name: deployment
 on:
-
-  workflow_dispatch:
-    inputs:
-      CUSTOM_NODES_REPO:
-        type: string
-        description: "Custom nodes repository"
-        required: true
-      CUSTOM_NODES_DIR:
-        type: string
-        description: "Custom nodes directory"
-        required: true
-
-  # push:
-  #   # push到主分支启用CD，根据实际情况更改
-  #   branches: [online]
-  #   paths-ignore:    # 添加忽略路径，避免不必要的构建
-  #     - '**.md'
-  #     - '.gitignore'
-  #     - 'LICENSE'
+  push:
+    # push到主分支启用CD，根据实际情况更改
+    branches: [online]
+    paths-ignore:    # 添加忽略路径，避免不必要的构建
+      - '**.md'
+      - '.gitignore'
+      - 'LICENSE'
 
 jobs:
   deploy-app:
@@ -53,11 +41,8 @@ jobs:
         run: |
           echo "GITHUB_SHA_SHORT=$(echo $GITHUB_SHA | cut -c 1-6)" >> $GITHUB_ENV
           echo "REGISTRY_REPO=${DOCKER_REGISTRY_MIRROR}/${DOCKER_REGISTRY_NAMESPACE}/${APP_NAME}" >> $GITHUB_ENV
-          echo "CUSTOM_NODES_REPO=${{ github.event.inputs.CUSTOM_NODES_REPO }}" >> $GITHUB_ENV
-          echo "CUSTOM_NODES_DIR=${{ github.event.inputs.CUSTOM_NODES_DIR }}" >> $GITHUB_ENV
-
-          echo "${{ github.event.inputs.CUSTOM_NODES_REPO }}"
-          echo "${{ github.event.inputs.CUSTOM_NODES_DIR }}"
+          echo "CUSTOM_NODES_REPO=https://github.com/M1kep/Comfy_KepKitchenSink.git" >> $GITHUB_ENV
+          echo "CUSTOM_NODES_DIR=Comfy_KepKitchenSink" >> $GITHUB_ENV
 
       - name: Login to Docker Registry
         uses: docker/login-action@v2  # 使用官方 action 登录
@@ -74,8 +59,8 @@ jobs:
           file: builder/Dockerfile
           push: true
           build-args: |
-            CUSTOM_NODES_REPO=${{ github.event.inputs.CUSTOM_NODES_REPO }}
-            CUSTOM_NODES_DIR=${{ github.event.inputs.CUSTOM_NODES_DIR }}
+            CUSTOM_NODES_REPO=https://github.com/M1kep/Comfy_KepKitchenSink.git
+            CUSTOM_NODES_DIR=Comfy_KepKitchenSink
           tags: |
             ${{ env.REGISTRY_REPO }}:latest
             ${{ env.REGISTRY_REPO }}:${{ env.GITHUB_SHA_SHORT }}
