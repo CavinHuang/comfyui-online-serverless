@@ -56,6 +56,9 @@ jobs:
           echo "CUSTOM_NODES_REPO=${{ github.event.inputs.CUSTOM_NODES_REPO }}" >> $GITHUB_ENV
           echo "CUSTOM_NODES_DIR=${{ github.event.inputs.CUSTOM_NODES_DIR }}" >> $GITHUB_ENV
 
+          echo "${{ github.event.inputs.CUSTOM_NODES_REPO }}"
+          echo "${{ github.event.inputs.CUSTOM_NODES_DIR }}"
+
       - name: Login to Docker Registry
         uses: docker/login-action@v2  # 使用官方 action 登录
         with:
@@ -71,8 +74,8 @@ jobs:
           file: builder/Dockerfile
           push: true
           build-args: |
-            CUSTOM_NODES_REPO=${{ env.CUSTOM_NODES_REPO }}
-            CUSTOM_NODES_DIR=${{ env.CUSTOM_NODES_DIR }}
+            CUSTOM_NODES_REPO=${{ github.event.inputs.CUSTOM_NODES_REPO }}
+            CUSTOM_NODES_DIR=${{ github.event.inputs.CUSTOM_NODES_DIR }}
           tags: |
             ${{ env.REGISTRY_REPO }}:latest
             ${{ env.REGISTRY_REPO }}:${{ env.GITHUB_SHA_SHORT }}
