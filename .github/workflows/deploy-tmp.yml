@@ -71,7 +71,7 @@ jobs:
         uses: docker/build-push-action@v4  # 使用官方 action 构建和推送
         with:
           context: .
-          file: builder/Dockerfile
+          file: Dockerfile
           push: true
           build-args: |
             CUSTOM_NODES_REPO=${{ github.event.inputs.CUSTOM_NODES_REPO }}
