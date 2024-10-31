@@ -22,31 +22,32 @@ RUN zypper --non-interactive refresh && \
     python311-devel \
     python311-setuptools \
     python311-wheel \
+    python311-Cython \
     gcc \
     gcc-c++ \
     make \
-    && zypper clean --all
+    && zypper clean --all \
+    # 验证 Python 版本和路径
+    && which python3 \
+    && python3 --version
 
 # 克隆项目
 RUN git clone -b online --single-branch --depth 1 --no-tags \
     https://github.com/CavinHuang/comfyui-online-serverless.git .
 
-# 升级 pip 和基础工具
-RUN python3.11 -m pip install --no-cache-dir --upgrade pip setuptools wheel
-
 # 安装 PyTorch
-RUN python3.11 -m pip install --verbose --no-cache-dir torch==2.1.1 torchvision==0.16.1 \
+RUN python3 -m pip install --verbose --no-cache-dir torch==2.1.1 torchvision==0.16.1 \
     --index-url https://download.pytorch.org/whl/cpu
 
 # 安装其他依赖
-RUN python3.11 -m pip install --verbose --no-cache-dir -r requirements.txt
+RUN python3 -m pip install --verbose --no-cache-dir -r requirements.txt
 
 # 处理自定义节点
 RUN if [ -n "${CUSTOM_NODES_REPO}" ] && [ -n "${CUSTOM_NODES_DIR}" ]; then \
     cd custom_nodes \
     && git clone --depth 1 --no-tags "${CUSTOM_NODES_REPO}" \
     && if [ -f "${CUSTOM_NODES_DIR}/requirements.txt" ]; then \
-       pip3.11 install --no-cache-dir -r "${CUSTOM_NODES_DIR}/requirements.txt"; \
+       python3 -m pip install --no-cache-dir -r "${CUSTOM_NODES_DIR}/requirements.txt"; \
     fi; \
     fi
 
@@ -83,6 +84,7 @@ RUN zypper --non-interactive refresh && \
     zypper --non-interactive install --no-recommends -y \
     python311 \
     python311-pip \
+    python311-setuptools \
     Mesa \
     glib2 \
     wget \
@@ -103,4 +105,4 @@ EXPOSE 8188
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:8188/system_stats || exit 1
 
-CMD ["python3.11", "main.py", "--disable-cuda-malloc", "--cpu"]
+CMD ["python3", "main.py", "--disable-cuda-malloc", "--cpu"]
