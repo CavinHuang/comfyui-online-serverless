@@ -8,7 +8,9 @@ ARG CUSTOM_NODES_DIR
 # 设置环境变量
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1
+    PIP_NO_CACHE_DIR=1 \
+    PIP_USER=true \
+    PATH="${PATH}:/root/.local/bin"
 
 # 优化包安装并清理缓存
 RUN zypper --non-interactive refresh && \
@@ -24,8 +26,9 @@ RUN zypper --non-interactive refresh && \
     update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 10
 
 # 使用单个 RUN 命令安装所有 Python 依赖
-RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install --no-cache-dir --break-system-packages \
+RUN mkdir -p /root/.local/lib/python3.10/site-packages && \
+    --mount=type=cache,target=/root/.cache/pip \
+    pip install --user --no-cache-dir --break-system-packages \
     torch==2.1.1 torchvision==0.16.1 \
     -r https://raw.githubusercontent.com/CavinHuang/comfyui-online-serverless/online/requirements.txt \
     --extra-index-url https://download.pytorch.org/whl/cpu && \
@@ -51,7 +54,7 @@ COPY --from=builder /usr/lib64/python3.10 /usr/lib64/python3.10
 COPY --from=builder /usr/bin/python3.10 /usr/bin/python3.10
 COPY --from=builder /usr/bin/python3 /usr/bin/python3
 COPY --from=builder /usr/lib64/libpython3.10.so* /usr/lib64/
-COPY --from=builder /root/.local/lib/python3.10/site-packages /root/.local/lib/python3.10/site-packages
+COPY --from=builder /root/.local /root/.local
 COPY runner-scripts/. /runner-scripts/
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
