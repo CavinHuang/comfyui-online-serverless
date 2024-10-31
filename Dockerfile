@@ -72,8 +72,8 @@ RUN zypper --non-interactive refresh && \
     zypper --non-interactive install --no-recommends -y \
     python311 \
     python311-pip \
-    Mesa-libGL1 \
-    libglib2_0-0 \
+    Mesa \
+    glib2 \
     wget \
     && zypper clean --all \
     # 创建非 root 用户
