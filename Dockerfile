@@ -33,7 +33,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN git clone -b online --single-branch --depth 1 \
     https://github.com/CavinHuang/comfyui-online-serverless.git . && \
     python3 -m pip install --no-cache-dir --upgrade pip && \
-    pip3 install --no-cache-dir torch==2.1.1 torchvision==0.16.1 \
+    pip3 install --no-cache-dir torch==2.1.1 torchvision==0.16.1 torchaudio==2.1.1 \
     --index-url https://download.pytorch.org/whl/cpu && \
     pip3 install --no-cache-dir -r requirements.txt
 
