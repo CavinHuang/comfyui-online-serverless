@@ -37,7 +37,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 # 安装项目依赖
 RUN --mount=type=cache,target=/root/.cache/pip \
   pip install --break-system-packages -r \
-  https://github.com/CavinHuang/comfyui-online-serverless/online/requirements.txt \
+  https://raw.githubusercontent.com/CavinHuang/comfyui-online-serverless/online/requirements.txt \
   --extra-index-url https://download.pytorch.org/whl/cpu
 
 # 克隆项目
