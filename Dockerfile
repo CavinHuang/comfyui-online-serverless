@@ -98,16 +98,6 @@ COPY --from=builder /usr/lib/python3*/site-packages /usr/lib/python3*/site-packa
 # 切换到非 root 用户
 USER comfy
 
-# Fix MediaPipe's broken dep (protobuf<4).
-RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install --break-system-packages \
-        mediapipe \
-    && pip list
-
-RUN df -h \
-    && du -ah /root \
-    && find /root/ -mindepth 1 -delete
-
 COPY runner-scripts/.  /runner-scripts/
 
 USER root
