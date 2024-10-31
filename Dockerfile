@@ -16,37 +16,38 @@ WORKDIR /build
 # 安装构建依赖
 RUN zypper --non-interactive refresh && \
     zypper --non-interactive install --no-recommends -y \
-    git-core \
+    git \
     python311 \
     python311-pip \
     python311-devel \
     gcc \
     gcc-c++ \
-    && zypper clean --all \
-    # 克隆项目
-    && git clone -b online --single-branch --depth 1 --no-tags \
+    && zypper clean --all
+
+# 克隆和安装依赖
+RUN git clone -b online --single-branch --depth 1 --no-tags \
     https://github.com/CavinHuang/comfyui-online-serverless.git . \
-    # 安装 Python 依赖
     && python3.11 -m pip install --no-cache-dir --upgrade pip \
     && pip3.11 install --no-cache-dir torch==2.1.1 torchvision==0.16.1 \
     --index-url https://download.pytorch.org/whl/cpu \
-    && pip3.11 install --no-cache-dir -r requirements.txt \
-    # 处理自定义节点
-    && if [ -n "${CUSTOM_NODES_REPO}" ] && [ -n "${CUSTOM_NODES_DIR}" ]; then \
-       cd custom_nodes \
-       && git clone --depth 1 --no-tags "${CUSTOM_NODES_REPO}" \
-       && if [ -f "${CUSTOM_NODES_DIR}/requirements.txt" ]; then \
-          pip3.11 install --no-cache-dir -r "${CUSTOM_NODES_DIR}/requirements.txt"; \
-       fi; \
-    fi \
-    # 清理构建依赖和缓存
-    && zypper --non-interactive remove -y \
-    git-core \
+    && pip3.11 install --no-cache-dir -r requirements.txt
+
+# 处理自定义节点
+RUN if [ -n "${CUSTOM_NODES_REPO}" ] && [ -n "${CUSTOM_NODES_DIR}" ]; then \
+    cd custom_nodes \
+    && git clone --depth 1 --no-tags "${CUSTOM_NODES_REPO}" \
+    && if [ -f "${CUSTOM_NODES_DIR}/requirements.txt" ]; then \
+       pip3.11 install --no-cache-dir -r "${CUSTOM_NODES_DIR}/requirements.txt"; \
+    fi; \
+    fi
+
+# 清理
+RUN zypper --non-interactive remove -y \
+    git \
     gcc \
     gcc-c++ \
     python311-devel \
     && zypper clean --all \
-    # 清理 Python 缓存和不必要文件
     && find /usr/lib/python3.11/site-packages -type d \( \
        -name "tests" -o \
        -name "examples" -o \
