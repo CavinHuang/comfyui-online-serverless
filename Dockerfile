@@ -27,13 +27,19 @@ RUN zypper --non-interactive refresh && \
     make \
     && zypper clean --all
 
-# 克隆和安装依赖 (添加 -v 参数来查看详细输出)
+# 克隆项目
 RUN git clone -b online --single-branch --depth 1 --no-tags \
-    https://github.com/CavinHuang/comfyui-online-serverless.git . && \
-    python3.11 -m pip install --no-cache-dir --upgrade pip setuptools wheel && \
-    python3.11 -m pip install --verbose --no-cache-dir torch==2.1.1 torchvision==0.16.1 \
-    --index-url https://download.pytorch.org/whl/cpu && \
-    python3.11 -m pip install --verbose --no-cache-dir -r requirements.txt
+    https://github.com/CavinHuang/comfyui-online-serverless.git .
+
+# 升级 pip 和基础工具
+RUN python3.11 -m pip install --no-cache-dir --upgrade pip setuptools wheel
+
+# 安装 PyTorch
+RUN python3.11 -m pip install --verbose --no-cache-dir torch==2.1.1 torchvision==0.16.1 \
+    --index-url https://download.pytorch.org/whl/cpu
+
+# 安装其他依赖
+RUN python3.11 -m pip install --verbose --no-cache-dir -r requirements.txt
 
 # 处理自定义节点
 RUN if [ -n "${CUSTOM_NODES_REPO}" ] && [ -n "${CUSTOM_NODES_DIR}" ]; then \
