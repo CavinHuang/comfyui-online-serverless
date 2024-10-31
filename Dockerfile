@@ -1,70 +1,75 @@
-# 构建阶段
-FROM opensuse/tumbleweed:latest as builder
-
 # 声明构建参数
 ARG CUSTOM_NODES_REPO
 ARG CUSTOM_NODES_DIR
 
-# 设置环境变量
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1 \
-    PIP_USER=true \
-    PATH="${PATH}:/root/.local/bin"
+FROM python:3.11-slim as builder
 
-# 优化包安装并清理缓存
-RUN zypper --non-interactive refresh && \
-    zypper --non-interactive install --no-recommends -y \
+# 重新声明构建参数，确保在 FROM 之后可用
+ARG CUSTOM_NODES_REPO
+ARG CUSTOM_NODES_DIR
+
+# 将参数转换为环境变量，确保在 RUN 命令中可用
+ENV CUSTOM_NODES_REPO=${CUSTOM_NODES_REPO}
+ENV CUSTOM_NODES_DIR=${CUSTOM_NODES_DIR}
+
+RUN echo "Debug: CUSTOM_NODES_REPO=${CUSTOM_NODES_REPO}" && \
+    echo "Debug: CUSTOM_NODES_DIR=${CUSTOM_NODES_DIR}"
+
+# RUN apt-get update && apt-get install -y \
+#     git \
+#     wget
+
+# 设置工作目录
+WORKDIR /build
+
+# 安装构建依赖并清理
+RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
-    python310 python310-pip python310-wheel \
-    python310-devel python310-Cython gcc-c++ \
-    python310-numpy1 python310-opencv \
-    Mesa-libGL1 libgthread-2_0-0 && \
-    zypper clean -a && \
-    rm -rf /var/cache/zypp/* && \
-    rm -f /usr/lib64/python3.10/EXTERNALLY-MANAGED && \
-    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 10
+    && rm -rf /var/lib/apt/lists/*
 
-# 使用单个 RUN 命令安装所有 Python 依赖
-RUN --mount=type=cache,target=/root/.cache/pip \
-    mkdir -p /root/.local/lib/python3.10/site-packages && \
-    pip install --user --no-cache-dir --break-system-packages \
-    torch==2.1.1 torchvision==0.16.1 \
-    -r https://raw.githubusercontent.com/CavinHuang/comfyui-online-serverless/online/requirements.txt \
-    --extra-index-url https://download.pytorch.org/whl/cpu && \
-    rm -rf /root/.cache/pip/*
+# 克隆项目并安装依赖
+RUN git clone -b online --single-branch --depth 1 \
+    https://github.com/CavinHuang/comfyui-online-serverless.git . && \
+    python3 -m pip install --no-cache-dir --upgrade pip && \
+    pip3 install --no-cache-dir torch==2.1.1 torchvision==0.16.1 torchaudio==2.1.1 \
+    --index-url https://download.pytorch.org/whl/cpu && \
+    pip3 install --no-cache-dir -r requirements.txt
 
-# 运行阶段
-FROM opensuse/tumbleweed:latest
 
-# 安装运行时必需的包
-RUN zypper --non-interactive refresh && \
-    zypper --non-interactive install --no-recommends -y \
-    git \
-    python310 python310-pip \
-    python310-numpy1 python310-opencv \
-    Mesa-libGL1 libgthread-2_0-0 \
-    aria2 && \
-    zypper clean -a && \
-    rm -rf /var/cache/zypp/* && \
-    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 10
+# 处理自定义节点
+RUN if [ -n "${CUSTOM_NODES_REPO}" ] && [ -n "${CUSTOM_NODES_DIR}" ]; then \
+    cd custom_nodes && \
+    git clone --depth 1 "${CUSTOM_NODES_REPO}" && \
+    if [ -f "${CUSTOM_NODES_DIR}/requirements.txt" ]; then \
+        pip3 install --no-cache-dir -r "${CUSTOM_NODES_DIR}/requirements.txt"; \
+    fi; \
+    fi
 
-# 从构建阶段复制 Python 相关文件
-COPY --from=builder /usr/lib64/python3.10 /usr/lib64/python3.10
-COPY --from=builder /usr/bin/python3.10 /usr/bin/python3.10
-COPY --from=builder /usr/bin/python3 /usr/bin/python3
-COPY --from=builder /usr/lib64/libpython3.10.so* /usr/lib64/
-COPY --from=builder /root/.local /root/.local
-COPY runner-scripts/. /runner-scripts/
+# 清理阶段 - 添加一个新的阶段专门用于清理
+FROM builder as cleaner
+RUN find /usr/local/lib/python3.11/site-packages -name "*.pyc" -delete && \
+    find /usr/local/lib/python3.11/site-packages -name "__pycache__" -delete && \
+    find /app -name "*.pyc" -delete && \
+    find /app -name "__pycache__" -delete && \
+    rm -rf /app/.git /app/.github /app/tests /app/docs
 
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PATH="${PATH}:/root/.local/bin" \
-    PIP_USER=true \
-    PIP_ROOT_USER_ACTION=ignore
 
-USER root
-WORKDIR /root
+# 最终阶段
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# 复制必要的文件从构建阶段
+COPY --from=builder /build /app
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+
+# 安装运行时依赖
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
 EXPOSE 8188
-ENV CLI_ARGS=""
-CMD ["bash","/runner-scripts/entrypoint.sh"]
+
+CMD ["python3", "main.py", "--disable-cuda-malloc", "--cpu"]
