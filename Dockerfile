@@ -33,14 +33,32 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 
 # 运行阶段
 FROM opensuse/tumbleweed:latest
+
+# 安装运行时必需的包
+RUN zypper --non-interactive refresh && \
+    zypper --non-interactive install --no-recommends -y \
+    git \
+    python310 python310-pip \
+    python310-numpy1 python310-opencv \
+    Mesa-libGL1 libgthread-2_0-0 \
+    aria2 && \
+    zypper clean -a && \
+    rm -rf /var/cache/zypp/* && \
+    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 10
+
+# 从构建阶段复制 Python 相关文件
 COPY --from=builder /usr/lib64/python3.10 /usr/lib64/python3.10
 COPY --from=builder /usr/bin/python3.10 /usr/bin/python3.10
 COPY --from=builder /usr/bin/python3 /usr/bin/python3
 COPY --from=builder /usr/lib64/libpython3.10.so* /usr/lib64/
+COPY --from=builder /root/.local/lib/python3.10/site-packages /root/.local/lib/python3.10/site-packages
 COPY runner-scripts/. /runner-scripts/
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    PATH="${PATH}:/root/.local/bin" \
+    PIP_USER=true \
+    PIP_ROOT_USER_ACTION=ignore
 
 USER root
 WORKDIR /root
