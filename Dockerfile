@@ -64,11 +64,11 @@ COPY --from=builder /build /app
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 
 # 安装运行时依赖
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libgl1-mesa-glx \
-    libglib2.0-0 \
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean
+# RUN apt-get update && apt-get install -y --no-install-recommends \
+#     libgl1-mesa-glx \
+#     libglib2.0-0 \
+#     && rm -rf /var/lib/apt/lists/* \
+#     && apt-get clean
 
 EXPOSE 8188
 
