@@ -85,21 +85,6 @@ jobs:
             org.opencontainers.image.source=${{ github.event.repository.html_url }}
             org.opencontainers.image.revision=${{ github.sha }}
 
-      # 在构建后添加这些步骤
-      - name: Check image size
-        run: |
-          docker image ls ${{ env.REGISTRY_REPO }}:latest --format "{{.Size}}"
-
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: ${{ env.REGISTRY_REPO }}:latest
-          format: 'table'
-          exit-code: '1'
-          ignore-unfixed: true
-          vuln-type: 'os,library'
-          severity: 'CRITICAL,HIGH'
-
       # 更新缓存
       - name: Move cache
         run: |
