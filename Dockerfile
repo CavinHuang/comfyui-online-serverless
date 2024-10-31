@@ -1,5 +1,5 @@
 # 构建阶段
-FROM opensuse/tumbleweed-minimal:latest as builder
+FROM opensuse/tumbleweed as builder
 
 # 声明构建参数
 ARG CUSTOM_NODES_REPO
@@ -59,7 +59,7 @@ RUN zypper --non-interactive refresh && \
     && rm -rf .git .github tests docs
 
 # 最终阶段
-FROM opensuse/tumbleweed-minimal:latest
+FROM opensuse/tumbleweed
 
 # 设置环境变量
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -74,6 +74,7 @@ RUN zypper --non-interactive refresh && \
     python311-pip \
     Mesa-libGL1 \
     libglib2_0-0 \
+    wget \
     && zypper clean --all \
     # 创建非 root 用户
     && groupadd -r comfy && useradd -r -g comfy comfy \
