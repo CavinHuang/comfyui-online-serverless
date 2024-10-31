@@ -26,8 +26,8 @@ RUN zypper --non-interactive refresh && \
     update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 10
 
 # 使用单个 RUN 命令安装所有 Python 依赖
-RUN mkdir -p /root/.local/lib/python3.10/site-packages && \
-    --mount=type=cache,target=/root/.cache/pip \
+RUN --mount=type=cache,target=/root/.cache/pip \
+    mkdir -p /root/.local/lib/python3.10/site-packages && \
     pip install --user --no-cache-dir --break-system-packages \
     torch==2.1.1 torchvision==0.16.1 \
     -r https://raw.githubusercontent.com/CavinHuang/comfyui-online-serverless/online/requirements.txt \
