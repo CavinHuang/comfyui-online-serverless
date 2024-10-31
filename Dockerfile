@@ -28,10 +28,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # 克隆项目并安装依赖
+# pip3 install --no-cache-dir torch==2.1.1 torchvision==0.16.1 torchaudio==2.1.1 \
+
 RUN git clone -b online --single-branch --depth 1 \
     https://github.com/CavinHuang/comfyui-online-serverless.git . && \
     python3 -m pip install --no-cache-dir --upgrade pip && \
-    pip3 install --no-cache-dir torch==2.1.1 torchvision==0.16.1 torchaudio==2.1.1 \
+    pip3 install --no-cache-dir torch==2.1.1 torchvision==0.16.1 \
     --index-url https://download.pytorch.org/whl/cpu && \
     pip3 install --no-cache-dir -r requirements.txt
 
@@ -51,7 +53,7 @@ RUN find /usr/local/lib/python3.11/site-packages -name "*.pyc" -delete && \
     find /usr/local/lib/python3.11/site-packages -name "__pycache__" -delete && \
     find /app -name "*.pyc" -delete && \
     find /app -name "__pycache__" -delete && \
-    rm -rf /app/.git /app/.github /app/tests /app/docs
+    rm -rf /app/.github /app/tests /app/docs /app/builder /app/.ci /app/tests-ui
 
 
 # 最终阶段
@@ -64,7 +66,7 @@ COPY --from=builder /build /app
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 
 # 安装运行时依赖
-# RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get install -y --no-install-recommends git
 #     libgl1-mesa-glx \
 #     libglib2.0-0 \
 #     && rm -rf /var/lib/apt/lists/* \
