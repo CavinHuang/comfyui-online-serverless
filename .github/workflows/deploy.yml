@@ -108,20 +108,19 @@ jobs:
             # 确保目录存在
             mkdir -p ${DIR_APP} && cd ${DIR_APP}
 
-            # 使用函数优化重复代码
-            cleanup_docker() {
-              docker rm -f ${APP_NAME} || true
-              docker rmi ${REGISTRY_REPO}:latest || true
-            }
+            # 在后台开始拉取新镜像
+            docker pull ${REGISTRY_REPO}:latest &
 
-            # 登录 Docker
-            echo ${DOCKER_REGISTRY_PASSWORD} | docker login ${DOCKER_REGISTRY_MIRROR} \
-              --username ${DOCKER_REGISTRY_USER} --password-stdin
+            # 等待拉取完成
+            wait
 
-            # 清理和部署
-            cleanup_docker
+            # 停止并删除旧容器
+            docker rm -f ${APP_NAME} || true
 
-            # 使用 docker compose 或直接运行容器
+            # 清理未使用的镜像
+            docker image prune -f
+
+            # 启动新容器
             docker run -d \
               --restart=always \
               --name ${APP_NAME} \

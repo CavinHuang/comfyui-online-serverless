@@ -2,7 +2,7 @@
 ARG CUSTOM_NODES_REPO
 ARG CUSTOM_NODES_DIR
 
-FROM python:3.11-slim as builder
+FROM python:3.11-alpine as builder
 
 # 重新声明构建参数，确保在 FROM 之后可用
 ARG CUSTOM_NODES_REPO
@@ -27,12 +27,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-# 克隆项目并安装依赖
+# 克隆项目（只获取必要文件）
 RUN git clone -b online --single-branch --depth 1 \
-    https://github.com/CavinHuang/comfyui-online-serverless.git . && \
-    python3 -m pip install --no-cache-dir --upgrade pip && \
-    pip3 install --no-cache-dir torch==2.1.1 torchvision==0.16.1 torchaudio==2.1.1 \
+    https://github.com/CavinHuang/comfyui-online-serverless.git .
+
+# 安装最小化依赖
+RUN python3 -m pip install --no-cache-dir --upgrade pip && \
+    # 只安装CPU版本的PyTorch
+    pip3 install --no-cache-dir torch==2.1.1 torchvision==0.16.1 \
     --index-url https://download.pytorch.org/whl/cpu && \
+    # 从requirements.txt安装必要依赖
     pip3 install --no-cache-dir -r requirements.txt
 
 
@@ -47,11 +51,15 @@ RUN if [ -n "${CUSTOM_NODES_REPO}" ] && [ -n "${CUSTOM_NODES_DIR}" ]; then \
 
 # 清理阶段 - 添加一个新的阶段专门用于清理
 FROM builder as cleaner
-RUN find /usr/local/lib/python3.11/site-packages -name "*.pyc" -delete && \
-    find /usr/local/lib/python3.11/site-packages -name "__pycache__" -delete && \
+RUN find /usr/local/lib/python3.11/site-packages -type d -name "tests" -exec rm -rf {} + && \
+    find /usr/local/lib/python3.11/site-packages -type d -name "examples" -exec rm -rf {} + && \
+    find /usr/local/lib/python3.11/site-packages -name "*.pyc" -delete && \
+    find /usr/local/lib/python3.11/site-packages -name "__pycache__" -exec rm -rf {} + && \
     find /app -name "*.pyc" -delete && \
-    find /app -name "__pycache__" -delete && \
-    rm -rf /app/.git /app/.github /app/tests /app/docs
+    find /app -name "__pycache__" -exec rm -rf {} + && \
+    rm -rf /app/.github /app/tests /app/docs && \
+    rm -rf /usr/local/lib/python3.11/site-packages/*.dist-info && \
+    rm -rf /usr/local/lib/python3.11/site-packages/*.egg-info
 
 
 # 最终阶段
