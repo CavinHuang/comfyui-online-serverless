@@ -1,6 +1,6 @@
 from config import config
 import modal
-from modal import Image, Mount, web_endpoint, Stub, asgi_app
+from modal import Image, Mount, web_endpoint, App, asgi_app
 import json
 import urllib.request
 import urllib.parse
@@ -14,25 +14,13 @@ import os
 current_directory = os.path.dirname(os.path.realpath(__file__))
 
 deploy_test = config["deploy_test"] == "True"
-# MODAL_IMAGE_ID = os.environ.get('MODAL_IMAGE_ID', None)
-
-# print(MODAL_IMAGE_ID)
-
-# config_file_path = current_directory if MODAL_IMAGE_ID is None else ""
-# with open(f'{config_file_path}/data/config.json') as f:
-#     config = json.load(f)
-# config["name"]
-# print(config)
 
 web_app = FastAPI()
 print(config)
 print("deploy_test ", deploy_test)
-stub = Stub(name=config["name"])
-# print(stub.app_id)
+app = App(config["name"])
 
 if not deploy_test:
-    # dockerfile_image = Image.from_dockerfile(f"{current_directory}/Dockerfile", context_mount=Mount.from_local_dir(f"{current_directory}/data", remote_path="/data"))
-    # dockerfile_image = Image.from_dockerfile(f"{current_directory}/Dockerfile", context_mount=Mount.from_local_dir(f"{current_directory}/data", remote_path="/data"))
 
     dockerfile_image = (
         modal.Image.debian_slim()
@@ -47,13 +35,13 @@ if not deploy_test:
         .run_commands(
             # Basic comfyui setup
             "git clone https://github.com/CavinHuang/comfyui-online-serverless.git /comfyui-online-serverless",
-            "cd /comfyui-online-serverless && pip install xformers!=0.0.18 -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cu121",
+            "cd /comfyui-online-serverless && pip install xformers!=0.0.18 -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu",
 
             # Install comfyui manager
-            "cd /comfyui-online-serverless/custom_nodes && git clone https://github.com/ltdrdata/ComfyUI-Manager.git",
-            "cd /comfyui-online-serverless/custom_nodes/ComfyUI-Manager && git reset --hard 9c86f62b912f4625fe2b929c7fc61deb9d16f6d3",
-            "cd /comfyui-online-serverless/custom_nodes/ComfyUI-Manager && pip install -r requirements.txt",
-            "cd /comfyui-online-serverless/custom_nodes/ComfyUI-Manager && mkdir startup-scripts",
+            # "cd /comfyui-online-serverless/custom_nodes && git clone https://github.com/ltdrdata/ComfyUI-Manager.git",
+            # "cd /comfyui-online-serverless/custom_nodes/ComfyUI-Manager && git reset --hard 9c86f62b912f4625fe2b929c7fc61deb9d16f6d3",
+            # "cd /comfyui-online-serverless/custom_nodes/ComfyUI-Manager && pip install -r requirements.txt",
+            # "cd /comfyui-online-serverless/custom_nodes/ComfyUI-Manager && mkdir startup-scripts",
         )
         # .run_commands(
         #     # Install comfy deploy
@@ -66,7 +54,7 @@ if not deploy_test:
 
         # Restore the custom nodes first
         .copy_local_file(f"{current_directory}/data/restore_snapshot.py", "/")
-        .copy_local_file(f"{current_directory}/data/snapshot.json", "/comfyui-online-serverless/custom_nodes/ComfyUI-Manager/startup-scripts/restore-snapshot.json")
+        # .copy_local_file(f"{current_directory}/data/snapshot.json", "/comfyui-online-serverless/custom_nodes/ComfyUI-Manager/startup-scripts/restore-snapshot.json")
         .run_commands("python restore_snapshot.py")
 
         # Then install the models
@@ -157,15 +145,14 @@ image = Image.debian_slim()
 target_image = image if deploy_test else dockerfile_image
 
 
-@stub.function(image=target_image, gpu=config["gpu"])
+@app.function(image=target_image)
 def run(input: Input):
     import subprocess
     import time
     # Make sure that the ComfyUI API is available
     print(f"comfy-modal - check server")
 
-    command = ["python", "main.py",
-               "--disable-auto-launch", "--disable-metadata"]
+    command = ["python", "main.py", "--disable-auto-launch", "--disable-metadata", "--disable-cuda-malloc", "--cpu"]
     server_process = subprocess.Popen(command, cwd="/comfyui-online-serverless")
 
     check_server(
@@ -239,7 +226,7 @@ async def bar(request_input: RequestInput):
     # pass
 
 
-@stub.function(image=image)
+@app.function(image=image)
 @asgi_app()
 def comfyui_api():
     return web_app
@@ -258,6 +245,8 @@ def spawn_comfyui_in_background():
             "python",
             "main.py",
             "--dont-print-server",
+            "--disable-cuda-malloc",
+            "--cpu",
             "--port",
             PORT,
         ],
@@ -280,9 +269,9 @@ def spawn_comfyui_in_background():
                 )
 
 
-@stub.function(
+@app.function(
     image=target_image,
-    gpu=config["gpu"],
+    # gpu=config["gpu"],
     # Allows 100 concurrent requests per container.
     allow_concurrent_inputs=100,
     # Restrict to 1 container because we want to our ComfyUI session state

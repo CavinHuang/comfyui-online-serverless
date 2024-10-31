@@ -174,15 +174,15 @@ class Item(BaseModel):
     snapshot: Snapshot
     models: List[Model]
     callback_url: str
-    gpu: GPUType = Field(default=GPUType.T4)
+    # gpu: GPUType = Field(default=GPUType.T4)
 
-    @field_validator('gpu')
-    @classmethod
-    def check_gpu(cls, value):
-        if value not in GPUType.__members__:
-            raise ValueError(
-                f"Invalid GPU option. Choose from: {', '.join(GPUType.__members__.keys())}")
-        return GPUType(value)
+    # @field_validator('gpu')
+    # @classmethod
+    # def check_gpu(cls, value):
+    #     if value not in GPUType.__members__:
+    #         raise ValueError(
+    #             f"Invalid GPU option. Choose from: {', '.join(GPUType.__members__.keys())}")
+    #     return GPUType(value)
 
 
 @app.websocket("/ws/{machine_id}")
@@ -312,7 +312,7 @@ async def build_logic(item: Item):
     config = {
         "name": item.name,
         "deploy_test": os.environ.get("DEPLOY_TEST_FLAG", "False"),
-        "gpu": item.gpu,
+        # "gpu": item.gpu,
         "civitai_token": os.environ.get("CIVITAI_TOKEN", "")
     }
     with open(f"{folder_path}/config.py", "w") as f:

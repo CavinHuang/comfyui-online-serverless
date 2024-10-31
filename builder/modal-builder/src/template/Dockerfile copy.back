@@ -1,5 +1,5 @@
 # Use Nvidia CUDA base image
-FROM python:3.11-slim as base
+FROM nvidia/cuda:12.1.0-cudnn8-runtime-ubuntu22.04 as base
 
 # Prevents prompts from packages asking for user input during installation
 ENV DEBIAN_FRONTEND=noninteractive
@@ -8,21 +8,10 @@ ENV PIP_PREFER_BINARY=1
 # Ensures output from python is printed immediately to the terminal without buffering
 ENV PYTHONUNBUFFERED=1
 
-# 重新声明构建参数，确保在 FROM 之后可用
-ARG CUSTOM_NODES_REPO
-ARG CUSTOM_NODES_DIR
-
-# 将参数转换为环境变量，确保在 RUN 命令中可用
-ENV CUSTOM_NODES_REPO=${CUSTOM_NODES_REPO}
-ENV CUSTOM_NODES_DIR=${CUSTOM_NODES_DIR}
-
-RUN echo "Debug: CUSTOM_NODES_REPO=${CUSTOM_NODES_REPO}" && \
-    echo "Debug: CUSTOM_NODES_DIR=${CUSTOM_NODES_DIR}"
-
 # Install Python, git and other necessary tools
 RUN apt-get update && apt-get install -y \
-    # python3.10 \
-    # python3-pip \
+    python3.10 \
+    python3-pip \
     git \
     wget
 
@@ -46,18 +35,18 @@ WORKDIR /comfyui-online-serverless
 # RUN /bin/bash -c "source venv/bin/activate"
 
 # Install ComfyUI dependencies
-RUN pip3 install --no-cache-dir torch==2.1.1 torchvision==0.16.1 torchaudio==2.1.1 --index-url https://download.pytorch.org/whl/cpu
-# RUN pip3 install --no-cache-dir xformers==0.0.23 --index-url https://download.pytorch.org/whl/cpu
+RUN pip3 install --no-cache-dir torch==2.1.1 torchvision==0.16.1 torchaudio==2.1.1 --index-url https://download.pytorch.org/whl/cu121
+RUN pip3 install --no-cache-dir xformers==0.0.23 --index-url https://download.pytorch.org/whl/cu121
 RUN pip3 install -r requirements.txt
 
 WORKDIR /comfyui-online-serverless/custom_nodes
 
-# RUN git clone --depth 1 https://github.com/ltdrdata/ComfyUI-Manager.git
-# RUN cd ComfyUI-Manager && pip3 install -r requirements.txt
+RUN git clone --depth 1 https://github.com/ltdrdata/ComfyUI-Manager.git
+RUN cd ComfyUI-Manager && pip3 install -r requirements.txt
 
 # Copy the snapshot json in place
-# RUN mkdir ComfyUI-Manager/startup-scripts
-# COPY /data/snapshot.json ComfyUI-Manager/startup-scripts/restore-snapshot.json
+RUN mkdir ComfyUI-Manager/startup-scripts
+COPY /data/snapshot.json ComfyUI-Manager/startup-scripts/restore-snapshot.json
 
 WORKDIR /comfyui-online-serverless
 
@@ -76,8 +65,8 @@ WORKDIR /comfyui-online-serverless/custom_nodes
 
 # RUN git clone https://github.com/BennyKok/comfyui-deploy.git && cd comfyui-deploy && git reset --hard 744a222e2652014e4d09af6b54fc11263b15e2f7
 
-# RUN git clone --depth 1 https://github.com/ltdrdata/ComfyUI-Manager.git
-# RUN cd ComfyUI-Manager && pip3 install -r requirements.txt
+RUN git clone --depth 1 https://github.com/ltdrdata/ComfyUI-Manager.git
+RUN cd ComfyUI-Manager && pip3 install -r requirements.txt
 
 WORKDIR /
 

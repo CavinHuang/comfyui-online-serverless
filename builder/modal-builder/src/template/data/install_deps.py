@@ -5,7 +5,7 @@ import subprocess
 
 print("Starting ComfyUI")
 
-command = ["python", "main.py", "--disable-auto-launch", "--disable-metadata", "--cpu"]
+command = ["python", "main.py", "--disable-auto-launch", "--disable-metadata", "--disable-cuda-malloc", "--cpu"]
 # Start the server
 server_process = subprocess.Popen(command, cwd="/comfyui-online-serverless")
 
