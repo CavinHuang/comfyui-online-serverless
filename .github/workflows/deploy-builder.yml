@@ -19,9 +19,15 @@ jobs:
     steps:
       # 拉取main分支代码
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           fetch-depth: 1  # 优化克隆深度
+          sparse-checkout: true    # 启用 sparse checkout
+          sparse-checkout-cone-mode: true  # 启用 cone 模式提高性能
+          sparse-checkout-list: |  # 指定要检出的文件夹/文件列表
+            builder/modal-builder/**
+          ref: 'online'
+          path: .
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2  # 使用 Buildx 获得更好的构建性能
@@ -34,6 +40,11 @@ jobs:
 
           # 使用 grep 过滤注释和空行，更高效的处理
           grep -v '^#\|^$' .env >> $GITHUB_ENV
+
+          # 打印出当前的文件夹
+          echo "Current directory: $(pwd)"
+          # 打印出当前的文件夹内容
+          ls -la
 
       - name: Set variables
         run: |
