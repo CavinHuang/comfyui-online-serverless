@@ -11,7 +11,6 @@ command = ["python", "main.py", "--disable-auto-launch", "--disable-metadata", "
 print("Starting server")
 print(command)
 logging.info(f"Starting server with command: {command}")
-logging.info(f"Current directory: {os.getcwd()}")
 server_process = subprocess.Popen(command, cwd="/comfyui-online-serverless")
 
 def check_server(url, retries=50, delay=500):
