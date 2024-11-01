@@ -142,6 +142,7 @@ jobs:
             docker run -d \
               --restart=always \
               --name ${APP_NAME} \
+              --env-file .env \
               -p 8190:8080 \
               ${REGISTRY_REPO}:latest
 
