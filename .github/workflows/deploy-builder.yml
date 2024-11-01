@@ -28,7 +28,17 @@ jobs:
           # sparse-checkout: |  # 指定要检出的文件夹/文件列表
           #   builder/modal-builder
           ref: 'online'
-          # path: .
+          path: 'tmp-res'
+
+      - name: Print current directory
+        run: |
+          echo "Current directory: $(pwd)"
+          ls -la
+
+          mv tmp-res/builder/modal-builder .
+
+          ls -la
+
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2  # 使用 Buildx 获得更好的构建性能
@@ -72,7 +82,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v4  # 使用官方 action 构建和推送
         with:
-          context: builder/modal-builder
+          context: .
           file: Dockerfile
           push: true
           tags: |
