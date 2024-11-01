@@ -5,6 +5,7 @@ on:
     branches: [online]
     paths:
       - 'builder/modal-builder/**'
+      - '.github/workflows/deploy-builder.yml'
 
 jobs:
   deploy-app:
@@ -23,7 +24,7 @@ jobs:
         with:
           fetch-depth: 1  # 优化克隆深度
           sparse-checkout: true    # 启用 sparse checkout
-          sparse-checkout-cone-mode: true  # 启用 cone 模式提高性能
+          # sparse-checkout-cone-mode: true  # 启用 cone 模式提高性能
           sparse-checkout-list: |  # 指定要检出的文件夹/文件列表
             builder/modal-builder/**
           ref: 'online'
