@@ -132,6 +132,10 @@ jobs:
             # 等待拉取完成
             wait
 
+            # 需要把.env文件复制到远程机器
+            curl -sfL -H "Authorization: token ${{ secrets.PAT }}" \
+            https://raw.githubusercontent.com/CavinHuang/envs/refs/heads/main/comfyui-serverless-modal-builder/.env > .env
+
             # 停止并删除旧容器
             docker rm -f ${APP_NAME} || true
 
