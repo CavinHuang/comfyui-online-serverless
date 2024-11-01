@@ -25,10 +25,10 @@ jobs:
           fetch-depth: 1  # 优化克隆深度
           # sparse-checkout: true    # 启用 sparse checkout
           # sparse-checkout-cone-mode: true  # 启用 cone 模式提高性能
-          sparse-checkout: |  # 指定要检出的文件夹/文件列表
-            builder/modal-builder
+          # sparse-checkout: |  # 指定要检出的文件夹/文件列表
+          #   builder/modal-builder
           ref: 'online'
-          path: .
+          # path: .
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2  # 使用 Buildx 获得更好的构建性能
@@ -72,8 +72,8 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v4  # 使用官方 action 构建和推送
         with:
-          context: .
-          file: builder/modal-builder/Dockerfile
+          context: builder/modal-builder
+          file: Dockerfile
           push: true
           tags: |
             ${{ env.REGISTRY_REPO }}:latest
