@@ -213,7 +213,7 @@ def run(input: Input):
     result = {"status": status}
 
     return result
-    print("Running remotely on Modal!")
+    # print("Running remotely on Modal!")
 
 
 # @web_app.post("/run")

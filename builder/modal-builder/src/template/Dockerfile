@@ -50,7 +50,7 @@ RUN pip3 install --no-cache-dir torch==2.1.1 torchvision==0.16.1 torchaudio==2.1
 # RUN pip3 install --no-cache-dir xformers==0.0.23 --index-url https://download.pytorch.org/whl/cpu
 RUN pip3 install -r requirements.txt
 
-WORKDIR /comfyui-online-serverless/custom_nodes
+# WORKDIR /comfyui-online-serverless/custom_nodes
 
 # RUN git clone --depth 1 https://github.com/ltdrdata/ComfyUI-Manager.git
 # RUN cd ComfyUI-Manager && pip3 install -r requirements.txt
@@ -59,12 +59,15 @@ WORKDIR /comfyui-online-serverless/custom_nodes
 # RUN mkdir ComfyUI-Manager/startup-scripts
 # COPY /data/snapshot.json ComfyUI-Manager/startup-scripts/restore-snapshot.json
 
-WORKDIR /comfyui-online-serverless
+# WORKDIR /comfyui-online-serverless
+
+RUN ls -la
 
 COPY /data/extra_model_paths.yaml .
 # ADD src/extra_model_paths.yaml ./
 
 # Go back to the root
+RUN cd /
 WORKDIR /
 
 COPY /data/install_deps.py .
@@ -72,16 +75,18 @@ COPY /data/deps.json .
 COPY /data/models.json .
 RUN python3 install_deps.py
 
-WORKDIR /comfyui-online-serverless/custom_nodes
+# WORKDIR /comfyui-online-serverless/custom_nodes
 
 # RUN git clone https://github.com/BennyKok/comfyui-deploy.git && cd comfyui-deploy && git reset --hard 744a222e2652014e4d09af6b54fc11263b15e2f7
 
 # RUN git clone --depth 1 https://github.com/ltdrdata/ComfyUI-Manager.git
 # RUN cd ComfyUI-Manager && pip3 install -r requirements.txt
 
-WORKDIR /
+# WORKDIR /
 
 COPY /data/start.sh /start.sh
 RUN chmod +x /start.sh
+
+RUN ls -la
 
 ENTRYPOINT ["/start.sh"]
