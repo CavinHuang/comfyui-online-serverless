@@ -35,7 +35,9 @@ jobs:
           echo "Current directory: $(pwd)"
           ls -la
 
-          mv tmp-res/builder/modal-builder .
+          mv tmp-res/builder/modal-builder/* .
+
+          rm -rf tmp-res
 
           ls -la
 
