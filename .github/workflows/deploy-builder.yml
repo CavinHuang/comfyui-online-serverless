@@ -1,0 +1,124 @@
+name: deployment-builder
+on:
+  push:
+    # push到主分支启用CD，根据实际情况更改
+    branches: [online]
+    paths:
+      - 'builder/modal-builder/**'
+
+jobs:
+  deploy-app:
+    timeout-minutes: 60  # 整个 job 的超时时间
+    runs-on: ubuntu-latest
+
+    # 后续step(非远程机器)可以通过${{env.xxx}}或者$xxx引用，否则通过 ${{vars.xx}} 或者 ${{secrets.xx}}，可选
+    env:
+      APP_NAME: comfyui-serverless-modal-builder
+      DOCKER_CACHE_TAG: cache  # 添加缓存标签
+
+    steps:
+      # 拉取main分支代码
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 1  # 优化克隆深度
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2  # 使用 Buildx 获得更好的构建性能
+
+      - name: Load environment variables
+        run: |
+          # 下载并处理环境变量文件
+          curl -sfL -H "Authorization: token ${{ secrets.PAT }}" \
+            https://raw.githubusercontent.com/CavinHuang/envs/refs/heads/main/comfyui-nodes-docs-site/prod/.env > .env
+
+          # 使用 grep 过滤注释和空行，更高效的处理
+          grep -v '^#\|^$' .env >> $GITHUB_ENV
+
+      - name: Set variables
+        run: |
+          echo "GITHUB_SHA_SHORT=$(echo $GITHUB_SHA | cut -c 1-6)" >> $GITHUB_ENV
+          echo "REGISTRY_REPO=${DOCKER_REGISTRY_MIRROR}/${DOCKER_REGISTRY_NAMESPACE}/${APP_NAME}" >> $GITHUB_ENV
+
+      - name: Login to Docker Registry
+        uses: docker/login-action@v2  # 使用官方 action 登录
+        with:
+          registry: ${{ env.DOCKER_REGISTRY_MIRROR }}
+          username: ${{ env.DOCKER_REGISTRY_USER }}
+          password: ${{ env.DOCKER_REGISTRY_PASSWORD }}
+
+      # 添加镜像层缓存
+      - name: Cache Docker layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      # 制作docker镜像并推送到镜像服务
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4  # 使用官方 action 构建和推送
+        with:
+          context: .
+          file: builder/modal-builder/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY_REPO }}:latest
+            ${{ env.REGISTRY_REPO }}:${{ env.GITHUB_SHA_SHORT }}
+          cache-from: |
+            type=local,src=/tmp/.buildx-cache
+            type=registry,ref=${{ env.REGISTRY_REPO }}:cache
+          cache-to: |
+            type=local,dest=/tmp/.buildx-cache-new,mode=max
+            type=registry,ref=${{ env.REGISTRY_REPO }}:cache,mode=max
+          platforms: linux/amd64
+          compression: zstd  # 使用更好的压缩算法
+          labels: |
+            org.opencontainers.image.source=${{ github.event.repository.html_url }}
+            org.opencontainers.image.revision=${{ github.sha }}
+
+      # 更新缓存
+      - name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+      # https://github.com/marketplace/actions/ssh-remote-commands
+      # 远程机器自动部署，因为是远程机器，所以这里环境变量需要重新设置
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v1.0.3
+        timeout-minutes: 30
+        env:
+          DIR_APP: /projects/repo/${{ env.APP_NAME }}
+        with:
+          host: ${{ vars.HOST }}
+          username: ${{ vars.USER }}
+          key: ${{ secrets.KEY }}
+          # 通过在env声明+envs export，后续可以直接$xxx调用；后续亦可继续使用 ${{vars.xxx}} 和 ${{secrets.xxx}}
+          envs: DIR_APP,APP_NAME,REGISTRY_REPO,DOCKER_REGISTRY_MIRROR,DOCKER_REGISTRY_USER,DOCKER_REGISTRY_PASSWORD
+          script: |
+            # 确保目录存在
+            mkdir -p ${DIR_APP} && cd ${DIR_APP}
+
+            # 在后台开始拉取新镜像
+            docker pull ${REGISTRY_REPO}:latest &
+
+            # 等待拉取完成
+            wait
+
+            # 停止并删除旧容器
+            docker rm -f ${APP_NAME} || true
+
+            # 清理未使用的镜像
+            docker image prune -f
+
+            # 启动新容器
+            docker run -d \
+              --restart=always \
+              --name ${APP_NAME} \
+              -p 8190:8080 \
+              ${REGISTRY_REPO}:latest
+
+            # 退出登录
+            docker logout ${DOCKER_REGISTRY_MIRROR}
