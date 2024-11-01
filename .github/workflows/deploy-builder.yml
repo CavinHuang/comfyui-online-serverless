@@ -36,6 +36,7 @@ jobs:
           ls -la
 
           mv tmp-res/builder/modal-builder/* .
+          mv tmp-res/builder/modal-builder/.env .
 
           rm -rf tmp-res
 
