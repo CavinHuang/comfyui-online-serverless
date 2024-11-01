@@ -21,8 +21,10 @@ from starlette.types import ASGIApp, Scope, Receive, Send
 
 from concurrent.futures import ThreadPoolExecutor
 
+# 设置线程池执行器
 # executor = ThreadPoolExecutor(max_workers=5)
 
+# 配置日志记录器
 gunicorn_error_logger = logging.getLogger("gunicorn.error")
 gunicorn_logger = logging.getLogger("gunicorn")
 uvicorn_access_logger = logging.getLogger("uvicorn.access")
@@ -30,6 +32,7 @@ uvicorn_access_logger.handlers = gunicorn_error_logger.handlers
 
 fastapi_logger.handlers = gunicorn_error_logger.handlers
 
+# 根据运行环境设置日志级别
 if __name__ != "__main__":
     fastapi_logger.setLevel(gunicorn_logger.level)
 else:
@@ -38,21 +41,23 @@ else:
 logger = logging.getLogger("uvicorn")
 logger.setLevel(logging.INFO)
 
+# 记录最后活动时间和超时时间
 last_activity_time = time.time()
 global_timeout = 60 * 4
 
+# 存储机器ID和WebSocket连接的映射
 machine_id_websocket_dict = {}
 machine_id_status = {}
 
+# 获取Fly.io实例ID
 fly_instance_id = os.environ.get('FLY_ALLOC_ID', 'local').split('-')[0]
 
 
 class FlyReplayMiddleware(BaseHTTPMiddleware):
     """
-    If the wrong instance was picked by the fly.io load balancer we use the fly-replay header
-    to repeat the request again on the right instance.
+    如果fly.io负载均衡器选择了错误的实例,使用fly-replay头重新发送请求到正确的实例
 
-    This only works if the right instance is provided as a query_string parameter.
+    仅当正确的实例作为query_string参数提供时有效
     """
 
     def __init__(self, app: ASGIApp) -> None:
@@ -67,7 +72,7 @@ class FlyReplayMiddleware(BaseHTTPMiddleware):
         async def send_wrapper(message):
             if target_instance != fly_instance_id:
                 if message['type'] == 'websocket.close' and 'Invalid session' in message['reason']:
-                    # fly.io only seems to look at the fly-replay header if websocket is accepted
+                    # fly.io只在websocket被接受时查看fly-replay头
                     message = {'type': 'websocket.accept'}
                 if 'headers' not in message:
                     message['headers'] = []
@@ -77,33 +82,35 @@ class FlyReplayMiddleware(BaseHTTPMiddleware):
         await self.app(scope, receive, send_wrapper)
 
 
+# 检查不活动状态的异步函数
 async def check_inactivity():
     global last_activity_time
     while True:
         # logger.info("Checking inactivity...")
         if time.time() - last_activity_time > global_timeout:
             if len(machine_id_status) == 0:
-                # The application has been inactive for more than 60 seconds.
-                # Scale it down to zero here.
+                # 应用超过60秒无活动
+                # 缩减到零
                 logger.info(
                     f"No activity for {global_timeout} seconds, exiting...")
                 # os._exit(0)
-                os.kill(os.getpid(), signal.SIGINT)
+                # os.kill(os.getpid(), signal.SIGINT)
                 break
             else:
                 pass
                 # logger.info(f"Timeout but still in progress")
 
-        await asyncio.sleep(1)  # Check every second
+        await asyncio.sleep(1)  # 每秒检查一次
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # 启动检查不活动状态的线程
     thread = run_in_new_thread(check_inactivity())
     yield
     logger.info("Cancelling")
 
-#
+# 初始化FastAPI应用
 app = FastAPI(lifespan=lifespan)
 app.add_middleware(FlyReplayMiddleware)
 # MODAL_ORG = os.environ.get("MODAL_ORG")
@@ -116,7 +123,7 @@ def read_root():
     logger.info(f"Extended inactivity time to {global_timeout}")
     return {"Hello": "World"}
 
-# create a post route called /create takes in a json of example
+# 创建/create POST路由,接收JSON格式:
 # {
 #     name: "my first image",
 #     deps: {
@@ -136,6 +143,7 @@ def read_root():
 # }
 
 
+# 定义数据模型
 class GitCustomNodes(BaseModel):
     hash: str
     disabled: bool
@@ -185,11 +193,12 @@ class Item(BaseModel):
     #     return GPUType(value)
 
 
+# WebSocket端点处理
 @app.websocket("/ws/{machine_id}")
 async def websocket_endpoint(websocket: WebSocket, machine_id: str):
     await websocket.accept()
     machine_id_websocket_dict[machine_id] = websocket
-    # Send existing logs
+    # 发送现有日志
     if machine_id in machine_logs_cache:
         combined_logs = "\n".join(
             log_entry['logs'] for log_entry in machine_logs_cache[machine_id])
@@ -204,26 +213,12 @@ async def websocket_endpoint(websocket: WebSocket, machine_id: str):
             global last_activity_time
             last_activity_time = time.time()
             logger.info(f"Extended inactivity time to {global_timeout}")
-            # You can handle received messages here if needed
+            # 可以在这里处理接收到的消息
     except WebSocketDisconnect:
         if machine_id in machine_id_websocket_dict:
             machine_id_websocket_dict.pop(machine_id)
 
-# @app.get("/test")
-# async def test():
-#     machine_id_status["123"] = True
-#     global last_activity_time
-#     last_activity_time = time.time()
-#     logger.info(f"Extended inactivity time to {global_timeout}")
-
-#     await asyncio.sleep(10)
-
-#     machine_id_status["123"] = False
-#     machine_id_status.pop("123")
-
-#     return {"Hello": "World"}
-
-
+# 创建机器的POST端点
 @app.post("/create")
 async def create_machine(item: Item):
     global last_activity_time
@@ -233,7 +228,7 @@ async def create_machine(item: Item):
     if item.machine_id in machine_id_status and machine_id_status[item.machine_id]:
         return JSONResponse(status_code=400, content={"error": "Build already in progress."})
 
-    # Run the building logic in a separate thread
+    # 在单独的任务中运行构建逻辑
     # future = executor.submit(build_logic, item)
     task = asyncio.create_task(build_logic(item))
 
@@ -245,18 +240,20 @@ class StopAppItem(BaseModel):
 
 
 def find_app_id(app_list, app_name):
+    print(app_list, '================')
     for app in app_list:
-        if app['Name'] == app_name:
+        if app['Description'] == app_name:
             return app['App ID']
     return None
 
+# 停止应用的POST端点
 @app.post("/stop-app")
 async def stop_app(item: StopAppItem):
     # cmd = f"modal app list | grep {item.machine_id} | awk -F '│' '{{print $2}}'"
     cmd = f"modal app list --json"
 
     env = os.environ.copy()
-    env["COLUMNS"] = "10000"  # Set the width to a large value
+    env["COLUMNS"] = "10000"  # 设置大宽度值
     find_id_process = await asyncio.subprocess.create_subprocess_shell(cmd,
                                                                       stdout=asyncio.subprocess.PIPE,
                                                                       stderr=asyncio.subprocess.PIPE,
@@ -288,33 +285,35 @@ async def stop_app(item: StopAppItem):
     else:
         return JSONResponse(status_code=500, content={"status": "error", "error": stderr.decode()})
 
-# Initialize the logs cache
+# 初始化日志缓存
 machine_logs_cache = {}
 
 
+# 构建逻辑的异步函数
 async def build_logic(item: Item):
-    # Deploy to modal
+    # 部署到modal
     folder_path = f"/app/builds/{item.machine_id}"
     machine_id_status[item.machine_id] = True
 
-    # Ensure the os path is same as the current directory
+    # 确保os路径与当前目录相同
     # os.chdir(os.path.dirname(os.path.realpath(__file__)))
     # print(
     #     f"builder - Current working directory: {os.getcwd()}"
     # )
 
-    # Copy the app template
+    # 复制应用模板
     # os.system(f"cp -r template {folder_path}")
     cp_process = await asyncio.subprocess.create_subprocess_exec("cp", "-r", "/app/src/template", folder_path)
     await cp_process.wait()
 
-    # Write the config file
+    # 写入配置文件
     config = {
         "name": item.name,
         "deploy_test": os.environ.get("DEPLOY_TEST_FLAG", "False"),
         # "gpu": item.gpu,
         "civitai_token": os.environ.get("CIVITAI_TOKEN", "")
     }
+    print('++++++++++++config', config)
     with open(f"{folder_path}/config.py", "w") as f:
         f.write("config = " + json.dumps(config))
 
@@ -345,6 +344,7 @@ async def build_logic(item: Item):
 
     url_queue = asyncio.Queue()
 
+    # 读取流的异步函数
     async def read_stream(stream, isStderr, url_queue: asyncio.Queue):
         while True:
             line = await stream.readline()
@@ -371,9 +371,9 @@ async def build_logic(item: Item):
                     if "Created web function comfyui_api =>" in l or ((l.startswith("https://") or l.startswith("│")) and l.endswith(".modal.run")):
                         if "Created web function comfyui_api =>" in l:
                             url = l.split("=>")[1].strip()
-                        # making sure it is a url
+                        # 确保是URL
                         elif "comfyui-api" in l:
-                            # Some case it only prints the url on a blank line
+                            # 某些情况下URL只在空行打印
                             if l.startswith("│"):
                                 url = l.split("│")[1].strip()
                             else:
@@ -398,7 +398,7 @@ async def build_logic(item: Item):
                                 }}))
 
                 else:
-                    # is error
+                    # 错误处理
                     logger.error(l)
                     machine_logs.append({
                         "logs": l,
@@ -424,14 +424,14 @@ async def build_logic(item: Item):
 
     await asyncio.wait([stdout_task, stderr_task])
 
-    # Wait for the subprocess to finish
+    # 等待子进程完成
     await process.wait()
 
     if not url_queue.empty():
-        # The queue is not empty, you can get an item
+        # 队列非空,可以获取项目
         url = await url_queue.get()
 
-    # Close the ws connection and also pop the item
+    # 关闭WebSocket连接并弹出项目
     if item.machine_id in machine_id_websocket_dict and machine_id_websocket_dict[item.machine_id] is not None:
         await machine_id_websocket_dict[item.machine_id].close()
 
@@ -441,10 +441,10 @@ async def build_logic(item: Item):
     if item.machine_id in machine_id_status:
         machine_id_status[item.machine_id] = False
 
-    # Check for errors
+    # 检查错误
     if process.returncode != 0:
         logger.info("An error occurred.")
-        # Send a post request with the json body machine_id to the callback url
+        # 向回调URL发送POST请求,带有machine_id的JSON主体
         machine_logs.append({
             "logs": "Unable to build the app image.",
             "timestamp": time.time()
@@ -489,11 +489,14 @@ def start_loop(loop):
     asyncio.set_event_loop(loop)
     loop.run_forever()
 
-
+# 在新的线程中运行协程
 def run_in_new_thread(coroutine):
+    # 创建新的事件循环
     new_loop = asyncio.new_event_loop()
+    # 创建线程
     t = threading.Thread(target=start_loop, args=(new_loop,), daemon=True)
     t.start()
+    # 在新的线程中运行协程
     asyncio.run_coroutine_threadsafe(coroutine, new_loop)
     return t
 

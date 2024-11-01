@@ -34,8 +34,8 @@ if not deploy_test:
         .apt_install("libgl1-mesa-glx", "libglib2.0-0")
         .run_commands(
             # Basic comfyui setup
-            "git clone https://github.com/CavinHuang/comfyui-online-serverless.git /comfyui-online-serverless",
-            "cd /comfyui-online-serverless && pip install xformers!=0.0.18 -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu",
+            "git clone -b online --single-branch --depth 1 https://github.com/CavinHuang/comfyui-online-serverless.git /comfyui-online-serverless",
+            "cd /comfyui-online-serverless && pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu",
 
             # Install comfyui manager
             # "cd /comfyui-online-serverless/custom_nodes && git clone https://github.com/ltdrdata/ComfyUI-Manager.git",
@@ -144,7 +144,6 @@ image = Image.debian_slim()
 
 target_image = image if deploy_test else dockerfile_image
 
-
 @app.function(image=target_image)
 def run(input: Input):
     import subprocess
@@ -217,19 +216,19 @@ def run(input: Input):
     print("Running remotely on Modal!")
 
 
-@web_app.post("/run")
-async def bar(request_input: RequestInput):
-    # print(request_input)
-    if not deploy_test:
-        run.spawn(request_input.input)
-        return {"status": "success"}
+# @web_app.post("/run")
+# async def bar(request_input: RequestInput):
+#     # print(request_input)
+#     if not deploy_test:
+#         run.spawn(request_input.input)
+#         return {"status": "success"}
     # pass
 
 
-@app.function(image=image)
-@asgi_app()
-def comfyui_api():
-    return web_app
+# @app.function(image=image)
+# @asgi_app()
+# def comfyui_api():
+#     return web_app
 
 
 HOST = "127.0.0.1"
