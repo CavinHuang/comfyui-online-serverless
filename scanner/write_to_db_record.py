@@ -3,6 +3,9 @@ import json
 import requests
 import logging
 
+package_report_url = "http://208.87.207.161:3000/api/comfy/plugins/node-def"
+node_report_url = "http://208.87.207.161:3000/api/comfy/nodes/node-def"
+
 def put_node_package_ddb(item):
     # requests.post('http://localhost:3000/api/node/putNodePackage', json=item, headers={'Authorization': 'Bearer ' + 'token'})
     # requests.post('http://127.0.0.1:6233/putNodePackage', json=item)
@@ -15,7 +18,7 @@ def put_node_package_ddb(item):
       "nameID": item['nameID'],
       "latestCommit": item['latestCommit']
     }
-    res = requests.post('https://comfydocs.site/api/comfy/plugins/node-def', json=postData, headers={'Authorization': 'Bearer ' + 'token'})
+    res = requests.post(package_report_url, json=postData, headers={'Authorization': 'Bearer ' + 'token'})
     print('🍻 res put_node_package_ddb',res)
     logging.info(f"🍻 res put_node_package_ddb => {res}")
 
@@ -37,7 +40,7 @@ def put_node_ddb(item):
       "folderPaths": folderPaths,
       "latestCommit": item['latestCommit']
     }
-    res = requests.post('https://comfydocs.site/api/comfy/nodes/node-def', json=postData, headers={'Authorization': 'Bearer ' + 'token'})
+    res = requests.post(node_report_url, json=postData, headers={'Authorization': 'Bearer ' + 'token'})
     print('🍻 res put_node_ddb',res)
     logging.info(f"🍻 res put_node_ddb => {res}")
 

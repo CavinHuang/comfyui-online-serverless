@@ -7,7 +7,6 @@ COPY ./requirements.txt ./
 RUN pip install --no-cache-dir --upgrade -r ./requirements.txt
 
 COPY ./src ./src
-COPY ./.env .
 
 RUN mkdir builds
 

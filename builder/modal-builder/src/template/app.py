@@ -43,11 +43,14 @@ if not deploy_test:
             # "cd /comfyui-online-serverless/custom_nodes/ComfyUI-Manager && pip install -r requirements.txt",
             # "cd /comfyui-online-serverless/custom_nodes/ComfyUI-Manager && mkdir startup-scripts",
         )
+        .copy_local_file(f"{current_directory}/data/install_custom_node.sh", "/install_custom_node.sh")
+        .run_commands("chmod +x /install_custom_node.sh")
+        .run_commands("/install_custom_node.sh")
         # .run_commands(
         #     # Install comfy deploy
         #     "cd /comfyui/custom_nodes && git clone https://github.com/BennyKok/comfyui-deploy.git",
         # )
-        # .copy_local_file(f"{current_directory}/data/extra_model_paths.yaml", "/comfyui")
+        # .copy_local_file(f"{current_directory}/data/extra_model_paths.yaml", "/comfyui-online-serverless")
 
         .copy_local_file(f"{current_directory}/data/start.sh", "/start.sh")
         .run_commands("chmod +x /start.sh")
@@ -151,7 +154,7 @@ def run(input: Input):
     # Make sure that the ComfyUI API is available
     print(f"comfy-modal - check server")
 
-    command = ["python", "main.py", "--disable-auto-launch", "--disable-metadata", "--disable-cuda-malloc", "--cpu"]
+    command = ["python", "main.py", "--disable-auto-launch", "--disable-metadata", "--disable-cuda-malloc", "--cpu", "--use-split-cross-attention"]
     server_process = subprocess.Popen(command, cwd="/comfyui-online-serverless")
 
     check_server(
@@ -182,25 +185,25 @@ def run(input: Input):
     status = ""
     try:
         print("getting request")
-        while retries < COMFY_POLLING_MAX_RETRIES:
-            status_result = check_status(prompt_id=prompt_id)
-            # history = get_history(prompt_id)
+        # while retries < COMFY_POLLING_MAX_RETRIES:
+        #     status_result = check_status(prompt_id=prompt_id)
+        #     # history = get_history(prompt_id)
 
-            # Exit the loop if we have found the history
-            # if prompt_id in history and history[prompt_id].get("outputs"):
-            #     break
+        #     # Exit the loop if we have found the history
+        #     # if prompt_id in history and history[prompt_id].get("outputs"):
+        #     #     break
 
-            # Exit the loop if we have found the status both success or failed
-            if 'status' in status_result and (status_result['status'] == 'success' or status_result['status'] == 'failed'):
-                status = status_result['status']
-                print(status)
-                break
-            else:
-                # Wait before trying again
-                time.sleep(COMFY_POLLING_INTERVAL_MS / 1000)
-                retries += 1
-        else:
-            return {"error": "Max retries reached while waiting for image generation"}
+        #     # Exit the loop if we have found the status both success or failed
+        #     if 'status' in status_result and (status_result['status'] == 'success' or status_result['status'] == 'failed'):
+        #         status = status_result['status']
+        #         print(status)
+        #         break
+        #     else:
+        #         # Wait before trying again
+        #         time.sleep(COMFY_POLLING_INTERVAL_MS / 1000)
+        #         retries += 1
+        # else:
+        #     return {"error": "Max retries reached while waiting for image generation"}
     except Exception as e:
         return {"error": f"Error waiting for image generation: {str(e)}"}
 
@@ -216,19 +219,19 @@ def run(input: Input):
     # print("Running remotely on Modal!")
 
 
-# @web_app.post("/run")
-# async def bar(request_input: RequestInput):
-#     # print(request_input)
-#     if not deploy_test:
-#         run.spawn(request_input.input)
-#         return {"status": "success"}
-    # pass
+@web_app.post("/run")
+async def bar(request_input: RequestInput):
+    # print(request_input)
+    if not deploy_test:
+        run.spawn(request_input.input)
+        return {"status": "success"}
+    pass
 
 
-# @app.function(image=image)
-# @asgi_app()
-# def comfyui_api():
-#     return web_app
+@app.function(image=image)
+@asgi_app()
+def comfyui_api():
+    return web_app
 
 
 HOST = "127.0.0.1"
@@ -246,6 +249,7 @@ def spawn_comfyui_in_background():
             "--dont-print-server",
             "--disable-cuda-malloc",
             "--cpu",
+            "--use-split-cross-attention",
             "--port",
             PORT,
         ],

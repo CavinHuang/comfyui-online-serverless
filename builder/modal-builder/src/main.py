@@ -175,6 +175,9 @@ class GPUType(str, Enum):
     A100 = "A100"
     L4 = "L4"
 
+class CustomNode(BaseModel):
+    url: str
+    directory: str
 
 class Item(BaseModel):
     machine_id: str
@@ -182,6 +185,7 @@ class Item(BaseModel):
     snapshot: Snapshot
     models: List[Model]
     callback_url: str
+    custom_nodes: List[CustomNode]
     # gpu: GPUType = Field(default=GPUType.T4)
 
     # @field_validator('gpu')
@@ -281,8 +285,12 @@ async def stop_app(item: StopAppItem):
         logger.info(f"cp_process stderr: {stderr.decode()}")
 
     if cp_process.returncode == 0:
+        requests.post(item.callback_url, json={
+                      "machine_id": item.machine_id, "status": "success"})
         return JSONResponse(status_code=200, content={"status": "success"})
     else:
+        requests.post(item.callback_url, json={
+                      "machine_id": item.machine_id, "status": "error", "error": stderr.decode()})
         return JSONResponse(status_code=500, content={"status": "error", "error": stderr.decode()})
 
 # 初始化日志缓存
@@ -324,6 +332,20 @@ async def build_logic(item: Item):
         models_json_list = [model.dict() for model in item.models]
         models_json_string = json.dumps(models_json_list)
         f.write(models_json_string)
+
+    if item.custom_nodes and len(item.custom_nodes) > 0:
+      shell_str = "cd /comfyui-online-serverless/custom_nodes\n"
+      for custom_node in item.custom_nodes:
+          shell_str += """
+git clone --depth 1 {custom_node.url} {custom_node.directory}
+if [ -f {custom_node.directory}/requirements.txt ]; then
+    cd {custom_node.directory}
+    pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu
+fi
+"""
+      shell_str = shell_str.format(custom_node=custom_node) + "\n cd /comfyui-online-serverless"
+      with open(f"{folder_path}/data/install_custom_node.sh", "w") as f:
+          f.write(shell_str)
 
     # os.chdir(folder_path)
     # process = subprocess.Popen(f"modal deploy {folder_path}/app.py", stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
