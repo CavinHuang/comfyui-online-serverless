@@ -3,8 +3,8 @@ import json
 import requests
 import logging
 
-package_report_url = "http://208.87.207.161:3000/api/comfy/plugins/node-def"
-node_report_url = "http://208.87.207.161:3000/api/comfy/nodes/node-def"
+package_report_url = "http://208.87.207.161:6000/api/comfy/plugins/node-def"
+node_report_url = "http://208.87.207.161:6000/api/comfy/nodes/node-def"
 
 def put_node_package_ddb(item):
     # requests.post('http://localhost:3000/api/node/putNodePackage', json=item, headers={'Authorization': 'Bearer ' + 'token'})
