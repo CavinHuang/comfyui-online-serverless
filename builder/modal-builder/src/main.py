@@ -241,6 +241,7 @@ async def create_machine(item: Item):
 
 class StopAppItem(BaseModel):
     machine_id: str
+    callback_url: str
 
 
 def find_app_id(app_list, app_name):

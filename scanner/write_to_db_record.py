@@ -10,7 +10,7 @@ def put_node_package_ddb(item):
     # requests.post('http://localhost:3000/api/node/putNodePackage', json=item, headers={'Authorization': 'Bearer ' + 'token'})
     # requests.post('http://127.0.0.1:6233/putNodePackage', json=item)
     # print('🍻 item put_node_package_ddb',item)
-    # logging.info(f"🍻 item put_node_package_ddb => {item}")
+    logging.info(f"🍻 item put_node_package_ddb => {item}")
     postData = {
       "packageID": item['id'],
       "gitRepo": item['gitRepo'],
@@ -40,6 +40,7 @@ def put_node_ddb(item):
       "folderPaths": folderPaths,
       "latestCommit": item['latestCommit']
     }
+    logging.info(f"🍻 postData put_node_ddb => {postData}")
     res = requests.post(node_report_url, json=postData, headers={'Authorization': 'Bearer ' + 'token'})
     print('🍻 res put_node_ddb',res)
     logging.info(f"🍻 res put_node_ddb => {res}")
