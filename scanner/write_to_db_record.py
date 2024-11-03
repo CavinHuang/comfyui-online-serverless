@@ -18,6 +18,7 @@ def put_node_package_ddb(item):
       "nameID": item['nameID'],
       "latestCommit": item['latestCommit']
     }
+    logging.info(f"🍻 postData package_report_url => {package_report_url}")
     res = requests.post(package_report_url, json=postData, headers={'Authorization': 'Bearer ' + 'token'})
     print('🍻 res put_node_package_ddb',res)
     logging.info(f"🍻 res put_node_package_ddb => {res}")
@@ -41,6 +42,7 @@ def put_node_ddb(item):
       "latestCommit": item['latestCommit']
     }
     logging.info(f"🍻 postData put_node_ddb => {postData}")
+    logging.info(f"🍻 node_report_url => {node_report_url}")
     res = requests.post(node_report_url, json=postData, headers={'Authorization': 'Bearer ' + 'token'})
     print('🍻 res put_node_ddb',res)
     logging.info(f"🍻 res put_node_ddb => {res}")
