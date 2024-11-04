@@ -29,17 +29,13 @@ def put_node_ddb(item):
     # print('🍻 item put_node_ddb',item)
     # logging.info(f"🍻 item put_node_ddb => {item}")
 
-    folderPaths = []
-    if 'folderPaths' in item:
-      folderPaths = item['folderPaths']
-
     postData = {
       "packName": item['packName'],
       "nodeName": item['nodeType'],
       "nodeID": item['id'],
       "nodeType": item['nodeType'],
       "nodeDef": item['nodeDef'],
-      "folderPaths": folderPaths,
+      "folderPaths": item['folderPaths'],
       "latestCommit": item['latestCommit']
     }
     # logging.info(f"🍻 postData put_node_ddb => {postData}")
