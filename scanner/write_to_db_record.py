@@ -10,7 +10,7 @@ def put_node_package_ddb(item):
     # requests.post('http://localhost:3000/api/node/putNodePackage', json=item, headers={'Authorization': 'Bearer ' + 'token'})
     # requests.post('http://127.0.0.1:6233/putNodePackage', json=item)
     # print('🍻 item put_node_package_ddb',item)
-    logging.info(f"🍻 item put_node_package_ddb => {item}")
+    # logging.info(f"🍻 item put_node_package_ddb => {item}")
     postData = {
       "packageID": item['id'],
       "gitRepo": item['gitRepo'],
@@ -19,6 +19,7 @@ def put_node_package_ddb(item):
       "latestCommit": item['latestCommit']
     }
     logging.info(f"🍻 postData package_report_url => {package_report_url}")
+    logging.info(f"🍻 postData => {postData}")
     res = requests.post(package_report_url, json=postData, headers={'Authorization': 'Bearer ' + 'token'})
     print('🍻 res put_node_package_ddb',res)
     logging.info(f"🍻 res put_node_package_ddb => {res}")
@@ -41,10 +42,10 @@ def put_node_ddb(item):
       "folderPaths": folderPaths,
       "latestCommit": item['latestCommit']
     }
-    logging.info(f"🍻 postData put_node_ddb => {postData}")
-    logging.info(f"🍻 node_report_url => {node_report_url}")
+    # logging.info(f"🍻 postData put_node_ddb => {postData}")
+    # logging.info(f"🍻 node_report_url => {node_report_url}")
     res = requests.post(node_report_url, json=postData, headers={'Authorization': 'Bearer ' + 'token'})
-    print('🍻 res put_node_ddb',res)
+    # print('🍻 res put_node_ddb',res)
     logging.info(f"🍻 res put_node_ddb => {res}")
 
 ######v3
@@ -77,8 +78,8 @@ def write_to_db_record(input_dict):
         return
     nodes_count = len(NODE_CLASS_MAPPINGS) - len(prev_nodes)
 
-    print('🍻 nodes_count',nodes_count, 'cur_node_package',cur_node_package)
-    logging.info(f"🍻 nodes_count => {nodes_count} cur_node_package => {cur_node_package}")
+    # print('🍻 nodes_count',nodes_count, 'cur_node_package',cur_node_package)
+    # logging.info(f"🍻 nodes_count => {nodes_count} cur_node_package => {cur_node_package}")
     if not os.path.isdir(module_path):
         return
     username, repo_name, default_branch_name, latest_commit = get_repo_user_and_name(module_path)

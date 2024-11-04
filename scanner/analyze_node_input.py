@@ -7,8 +7,8 @@ import logging
 
 def analyze_class(cls):
     input_types_method = getattr(cls, 'INPUT_TYPES', None)
-    print('🍻 input_types_method',input_types_method)
-    logging.info("🍻 input_types_method %s", input_types_method)
+    # print('🍻 input_types_method',input_types_method)
+    # logging.info("🍻 input_types_method %s", input_types_method)
     if input_types_method:
         class_name = cls.__name__  # Capture the class name
         source = inspect.getsource(input_types_method)

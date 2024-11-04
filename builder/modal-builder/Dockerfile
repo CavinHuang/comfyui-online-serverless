@@ -10,6 +10,8 @@ COPY ./src ./src
 
 RUN mkdir builds
 
+EXPOSE 8080
+
 # CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "80", "--lifespan", "on"]
 CMD ["python", "src/main.py"]
 # If running behind a proxy like Nginx or Traefik add --proxy-headers

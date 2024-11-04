@@ -1,17 +1,15 @@
-from typing import Union, Optional, Dict, List
-from pydantic import BaseModel, Field, field_validator
-from fastapi import FastAPI, HTTPException, WebSocket, BackgroundTasks, WebSocketDisconnect
+from typing import  Dict, List, Set
+from pydantic import BaseModel
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
 from fastapi.logger import logger as fastapi_logger
 import os
 from enum import Enum
 import json
-import subprocess
 import time
 from contextlib import asynccontextmanager
 import asyncio
 import threading
-import signal
 import logging
 from fastapi.logger import logger as fastapi_logger
 import requests
@@ -19,10 +17,8 @@ from urllib.parse import parse_qs
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp, Scope, Receive, Send
 
-from concurrent.futures import ThreadPoolExecutor
-
-# 设置线程池执行器
-# executor = ThreadPoolExecutor(max_workers=5)
+import weakref
+import aiohttp
 
 # 配置日志记录器
 gunicorn_error_logger = logging.getLogger("gunicorn.error")
@@ -86,29 +82,74 @@ class FlyReplayMiddleware(BaseHTTPMiddleware):
 async def check_inactivity():
     global last_activity_time
     while True:
-        # logger.info("Checking inactivity...")
         if time.time() - last_activity_time > global_timeout:
             if len(machine_id_status) == 0:
-                # 应用超过60秒无活动
-                # 缩减到零
-                logger.info(
-                    f"No activity for {global_timeout} seconds, exiting...")
-                # os._exit(0)
-                # os.kill(os.getpid(), signal.SIGINT)
-                break
-            else:
-                pass
-                # logger.info(f"Timeout but still in progress")
+                logger.info(f"No activity for {global_timeout} seconds, but keeping server alive...")
+                last_activity_time = time.time()  # 重置计时器
+        await asyncio.sleep(1)
 
-        await asyncio.sleep(1)  # 每秒检查一次
 
+# 添加线程跟踪器
+class ThreadTracker:
+    def __init__(self):
+        self.active_threads: Set[threading.Thread] = set()
+        self._lock = threading.Lock()
+
+    def add_thread(self, thread: threading.Thread):
+        with self._lock:
+            self.active_threads.add(thread)
+
+    def remove_thread(self, thread: threading.Thread):
+        with self._lock:
+            self.active_threads.discard(thread)
+
+    def cleanup(self):
+        with self._lock:
+            for thread in list(self.active_threads):
+                if not thread.is_alive():
+                    self.active_threads.discard(thread)
+
+# 创建全局线程跟踪器
+thread_tracker = ThreadTracker()
+
+class AsyncLoopThread(threading.Thread):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.loop = None
+        self._stop_event = threading.Event()
+
+    def run(self):
+        self.loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self.loop)
+        try:
+            self.loop.run_until_complete(self._run_with_cleanup())
+        finally:
+            self.loop.close()
+            thread_tracker.remove_thread(self)
+
+    async def _run_with_cleanup(self):
+        while not self._stop_event.is_set():
+            await asyncio.sleep(0.1)
+
+    def stop(self):
+        self._stop_event.set()
+        if self.loop:
+            self.loop.call_soon_threadsafe(self.loop.stop)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # 启动检查不活动状态的线程
-    thread = run_in_new_thread(check_inactivity())
-    yield
-    logger.info("Cancelling")
+    inactivity_thread = run_in_new_thread(check_inactivity())
+    try:
+        yield
+    finally:
+        # 清理所有活动线程
+        logger.info("Cleaning up threads...")
+        if inactivity_thread and inactivity_thread.is_alive():
+            inactivity_thread.stop()
+            inactivity_thread.join(timeout=5)
+        thread_tracker.cleanup()
+        logger.info("Threads cleaned up")
 
 # 初始化FastAPI应用
 app = FastAPI(lifespan=lifespan)
@@ -222,21 +263,42 @@ async def websocket_endpoint(websocket: WebSocket, machine_id: str):
         if machine_id in machine_id_websocket_dict:
             machine_id_websocket_dict.pop(machine_id)
 
+main_task_progress = None
+# 使用字典管理每个机器的任务
+machine_tasks = {}
+
 # 创建机器的POST端点
 @app.post("/create")
 async def create_machine(item: Item):
-    global last_activity_time
-    last_activity_time = time.time()
-    logger.info(f"Extended inactivity time to {global_timeout}")
+    logger.info(f"Creating machine {item.machine_id}")
+    machine_id = item.machine_id
 
-    if item.machine_id in machine_id_status and machine_id_status[item.machine_id]:
-        return JSONResponse(status_code=400, content={"error": "Build already in progress."})
+    # 如果已有任务在运行，返回错误
+    if machine_id in machine_tasks and not machine_tasks[machine_id].done():
+        return JSONResponse(
+            status_code=400,
+            content={"error": "Build already in progress"}
+        )
 
-    # 在单独的任务中运行构建逻辑
-    # future = executor.submit(build_logic, item)
-    task = asyncio.create_task(build_logic(item))
+    try:
+        # 创建新的任务并存储
+        task = asyncio.create_task(build_logic(item))
+        machine_tasks[machine_id] = task
 
-    return JSONResponse(status_code=200, content={"message": "Build Queued", "build_machine_instance_id": fly_instance_id})
+        # 立即返回响应，不等待构建完成
+        return JSONResponse(
+            status_code=200,
+            content={
+                "message": "Build Queued",
+                "build_machine_instance_id": fly_instance_id
+            }
+        )
+    except Exception as e:
+        logger.error(f"Error creating machine: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"error": f"Failed to create machine: {str(e)}"}
+        )
 
 
 class StopAppItem(BaseModel):
@@ -300,213 +362,226 @@ machine_logs_cache = {}
 
 # 构建逻辑的异步函数
 async def build_logic(item: Item):
-    # 部署到modal
-    folder_path = f"/app/builds/{item.machine_id}"
-    machine_id_status[item.machine_id] = True
+    callback_sent = False  # 添加标志来跟踪回调状态
+    try:
+        # 部署到modal
+        folder_path = f"/app/builds/{item.machine_id}"
+        machine_id_status[item.machine_id] = True
 
-    # 确保os路径与当前目录相同
-    # os.chdir(os.path.dirname(os.path.realpath(__file__)))
-    # print(
-    #     f"builder - Current working directory: {os.getcwd()}"
-    # )
+        # 复制应用模板
+        cp_process = await asyncio.subprocess.create_subprocess_exec("cp", "-r", "/app/src/template", folder_path)
+        await cp_process.wait()
 
-    # 复制应用模板
-    # os.system(f"cp -r template {folder_path}")
-    cp_process = await asyncio.subprocess.create_subprocess_exec("cp", "-r", "/app/src/template", folder_path)
-    await cp_process.wait()
+        # 写入配置文件
+        config = {
+            "name": item.name,
+            "deploy_test": os.environ.get("DEPLOY_TEST_FLAG", "False"),
+            "civitai_token": os.environ.get("CIVITAI_TOKEN", "")
+        }
+        print('++++++++++++config', config)
+        with open(f"{folder_path}/config.py", "w") as f:
+            f.write("config = " + json.dumps(config))
 
-    # 写入配置文件
-    config = {
-        "name": item.name,
-        "deploy_test": os.environ.get("DEPLOY_TEST_FLAG", "False"),
-        # "gpu": item.gpu,
-        "civitai_token": os.environ.get("CIVITAI_TOKEN", "")
-    }
-    print('++++++++++++config', config)
-    with open(f"{folder_path}/config.py", "w") as f:
-        f.write("config = " + json.dumps(config))
+        with open(f"{folder_path}/data/snapshot.json", "w") as f:
+            f.write(item.snapshot.json())
 
-    with open(f"{folder_path}/data/snapshot.json", "w") as f:
-        f.write(item.snapshot.json())
+        with open(f"{folder_path}/data/models.json", "w") as f:
+            models_json_list = [model.dict() for model in item.models]
+            models_json_string = json.dumps(models_json_list)
+            f.write(models_json_string)
 
-    with open(f"{folder_path}/data/models.json", "w") as f:
-        models_json_list = [model.dict() for model in item.models]
-        models_json_string = json.dumps(models_json_list)
-        f.write(models_json_string)
-
-    if item.custom_nodes and len(item.custom_nodes) > 0:
-      shell_str = "cd /comfyui-online-serverless/custom_nodes\n"
-      for custom_node in item.custom_nodes:
-          shell_str += """
+        if item.custom_nodes and len(item.custom_nodes) > 0:
+          shell_str = "cd /comfyui-online-serverless/custom_nodes\n"
+          for custom_node in item.custom_nodes:
+              shell_str += """
 git clone --depth 1 {custom_node.url} {custom_node.directory}
 if [ -f {custom_node.directory}/requirements.txt ]; then
     cd {custom_node.directory}
     pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu
 fi
 """
-      shell_str = shell_str.format(custom_node=custom_node) + "\n cd /comfyui-online-serverless"
-      with open(f"{folder_path}/data/install_custom_node.sh", "w") as f:
-          f.write(shell_str)
+          shell_str = shell_str.format(custom_node=custom_node) + "\n cd /comfyui-online-serverless"
+          with open(f"{folder_path}/data/install_custom_node.sh", "w") as f:
+              f.write(shell_str)
 
-    # os.chdir(folder_path)
-    # process = subprocess.Popen(f"modal deploy {folder_path}/app.py", stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
-    process = await asyncio.subprocess.create_subprocess_shell(
-        f"modal deploy app.py",
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-        cwd=folder_path,
-        env={**os.environ, "COLUMNS": "10000"}
-    )
+        process = await asyncio.subprocess.create_subprocess_shell(
+            f"modal deploy app.py",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            cwd=folder_path,
+            env={**os.environ, "COLUMNS": "10000"}
+        )
 
-    url = None
+        url = None
 
-    if item.machine_id not in machine_logs_cache:
-        machine_logs_cache[item.machine_id] = []
+        if item.machine_id not in machine_logs_cache:
+            machine_logs_cache[item.machine_id] = []
 
-    machine_logs = machine_logs_cache[item.machine_id]
+        machine_logs = machine_logs_cache[item.machine_id]
 
-    url_queue = asyncio.Queue()
+        url_queue = asyncio.Queue()
 
-    # 读取流的异步函数
-    async def read_stream(stream, isStderr, url_queue: asyncio.Queue):
-        while True:
-            line = await stream.readline()
-            if line:
-                l = line.decode('utf-8').strip()
+        logger.info(f"Deploying machine {item.machine_id}")
 
-                if l == "":
-                    continue
+        # 读取流的异步函数
+        async def read_stream(stream, isStderr, url_queue: asyncio.Queue):
+            while True:
+                line = await stream.readline()
+                if line:
+                    l = line.decode('utf-8').strip()
 
-                if not isStderr:
-                    logger.info(l)
-                    machine_logs.append({
-                        "logs": l,
-                        "timestamp": time.time()
-                    })
+                    if l == "":
+                        continue
 
-                    if item.machine_id in machine_id_websocket_dict:
-                        await machine_id_websocket_dict[item.machine_id].send_text(json.dumps({"event": "LOGS", "data": {
-                            "machine_id": item.machine_id,
+                    if not isStderr:
+                        logger.info(l)
+                        machine_logs.append({
                             "logs": l,
                             "timestamp": time.time()
-                        }}))
+                        })
 
-                    if "Created web function comfyui_api =>" in l or ((l.startswith("https://") or l.startswith("│")) and l.endswith(".modal.run")):
-                        if "Created web function comfyui_api =>" in l:
-                            url = l.split("=>")[1].strip()
-                        # 确保是URL
-                        elif "comfyui-api" in l:
-                            # 某些情况下URL只在空行打印
-                            if l.startswith("│"):
-                                url = l.split("│")[1].strip()
-                            else:
-                                url = l
+                        if "Created web function comfyui_api =>" in l or ((l.startswith("https://") or l.startswith("│")) and l.endswith(".modal.run")):
+                            if "Created web function comfyui_api =>" in l:
+                                url = l.split("=>")[1].strip()
+                            elif "comfyui-api" in l:
+                                if l.startswith("│"):
+                                    url = l.split("│")[1].strip()
+                                else:
+                                    url = l
 
-                        if url:
-                            machine_logs.append({
-                                "logs": f"App image built, url: {url}",
-                                "timestamp": time.time()
-                            })
-
-                            await url_queue.put(url)
-
-                            if item.machine_id in machine_id_websocket_dict:
-                                await machine_id_websocket_dict[item.machine_id].send_text(json.dumps({"event": "LOGS", "data": {
-                                    "machine_id": item.machine_id,
+                            if url:
+                                machine_logs.append({
                                     "logs": f"App image built, url: {url}",
                                     "timestamp": time.time()
-                                }}))
-                                await machine_id_websocket_dict[item.machine_id].send_text(json.dumps({"event": "FINISHED", "data": {
-                                    "status": "succuss",
-                                }}))
+                                })
 
-                else:
-                    # 错误处理
-                    logger.error(l)
-                    machine_logs.append({
-                        "logs": l,
-                        "timestamp": time.time()
-                    })
+                                await url_queue.put(url)
 
-                    if item.machine_id in machine_id_websocket_dict:
-                        await machine_id_websocket_dict[item.machine_id].send_text(json.dumps({"event": "LOGS", "data": {
-                            "machine_id": item.machine_id,
+                    else:
+                        # 错误处理
+                        logger.error(l)
+                        machine_logs.append({
                             "logs": l,
                             "timestamp": time.time()
-                        }}))
-                        await machine_id_websocket_dict[item.machine_id].send_text(json.dumps({"event": "FINISHED", "data": {
-                            "status": "failed",
-                        }}))
-            else:
-                break
+                        })
+                else:
+                    break
 
-    stdout_task = asyncio.create_task(
-        read_stream(process.stdout, False, url_queue))
-    stderr_task = asyncio.create_task(
-        read_stream(process.stderr, True, url_queue))
+        stdout_task = asyncio.create_task(
+            read_stream(process.stdout, False, url_queue))
+        stderr_task = asyncio.create_task(
+            read_stream(process.stderr, True, url_queue))
 
-    await asyncio.wait([stdout_task, stderr_task])
+        await asyncio.wait([stdout_task, stderr_task])
 
-    # 等待子进程完成
-    await process.wait()
+        # 等待子进程完成
+        await process.wait()
 
-    if not url_queue.empty():
-        # 队列非空,可以获取项目
-        url = await url_queue.get()
+        logger.info(f"Finished deploying machine {item.machine_id}")
 
-    # 关闭WebSocket连接并弹出项目
-    if item.machine_id in machine_id_websocket_dict and machine_id_websocket_dict[item.machine_id] is not None:
-        await machine_id_websocket_dict[item.machine_id].close()
+        if not url_queue.empty():
+            url = await url_queue.get()
 
-    if item.machine_id in machine_id_websocket_dict:
-        machine_id_websocket_dict.pop(item.machine_id)
+        # 关闭WebSocket连接并弹出项目
+        if item.machine_id in machine_id_websocket_dict and machine_id_websocket_dict[item.machine_id] is not None:
+            await machine_id_websocket_dict[item.machine_id].close()
 
-    if item.machine_id in machine_id_status:
-        machine_id_status[item.machine_id] = False
+        if item.machine_id in machine_id_websocket_dict:
+            machine_id_websocket_dict.pop(item.machine_id)
 
-    # 检查错误
-    if process.returncode != 0:
-        logger.info("An error occurred.")
-        # 向回调URL发送POST请求,带有machine_id的JSON主体
-        machine_logs.append({
-            "logs": "Unable to build the app image.",
-            "timestamp": time.time()
+        if item.machine_id in machine_id_status:
+            machine_id_status[item.machine_id] = False
+
+        logger.info(f"Deployed machine {item.machine_id}")
+        logger.info(url)
+
+        logger.info(f"return code: {process.returncode}")
+
+        # 检查错误
+        if process.returncode != 0:
+            logger.info("An error occurred.")
+            machine_logs.append({
+                "logs": "Unable to build the app image.",
+                "timestamp": time.time()
+            })
+            await send_callback(item.callback_url, {
+                "machine_id": item.machine_id,
+                "status": "error",
+                "error": "Build process failed",
+                "build_log": json.dumps(machine_logs)
+            })
+            callback_sent = True  # 标记回调已发送
+            return
+
+        if url is None:
+            machine_logs.append({
+                "logs": "App image built, but url is None, unable to parse the url.",
+                "timestamp": time.time()
+            })
+            logger.info("App image built, but url is None, unable to parse the url.")
+            await send_callback(item.callback_url, {
+                "machine_id": item.machine_id,
+                "status": "error",
+                "error": "Failed to get deployment URL",
+                "build_log": json.dumps(machine_logs)
+            })
+            callback_sent = True  # 标记回调已发送
+            return
+
+        logger.info(f"machine_id: {item.machine_id}, endpoint: {url}, item.callback_url: {item.callback_url}")
+        await send_callback(item.callback_url, {
+            "machine_id": item.machine_id,
+            "status": "success",
+            "endpoint": url,
+            "build_log": json.dumps(machine_logs)
         })
-        requests.post(item.callback_url, json={
-                      "machine_id": item.machine_id, "build_log": json.dumps(machine_logs)})
+        callback_sent = True  # 标记回调已发送
 
+    except Exception as e:
+        logger.error(f"Error in build_logic: {str(e)}")
+        if not callback_sent:  # 只在还没发送回调时发送错误回调
+            try:
+                await send_callback(item.callback_url, {
+                    "machine_id": item.machine_id,
+                    "status": "error",
+                    "error": str(e),
+                    "build_log": json.dumps(machine_logs) if 'machine_logs' in locals() else "[]"
+                })
+            except Exception as callback_error:
+                logger.error(f"Error sending error callback: {str(callback_error)}")
+    finally:
+        # 清理资源
         if item.machine_id in machine_logs_cache:
             del machine_logs_cache[item.machine_id]
+        if item.machine_id in machine_id_status:
+            machine_id_status[item.machine_id] = False
+        if item.machine_id in machine_id_websocket_dict:
+            try:
+                await machine_id_websocket_dict[item.machine_id].close()
+            except Exception as e:
+                logger.error(f"Error closing websocket: {str(e)}")
+            machine_id_websocket_dict.pop(item.machine_id)
 
-        return
-        # return JSONResponse(status_code=400, content={"error": "Unable to build the app image."})
+        # 从任务字典中移除
+        if item.machine_id in machine_tasks:
+            machine_tasks.pop(item.machine_id)
 
-    # app_suffix = "comfyui-app"
-
-    if url is None:
-        machine_logs.append({
-            "logs": "App image built, but url is None, unable to parse the url.",
-            "timestamp": time.time()
-        })
-        requests.post(item.callback_url, json={
-                      "machine_id": item.machine_id, "build_log": json.dumps(machine_logs)})
-
-        if item.machine_id in machine_logs_cache:
-            del machine_logs_cache[item.machine_id]
-
-        return
-        # return JSONResponse(status_code=400, content={"error": "App image built, but url is None, unable to parse the url."})
-    # example https://bennykok--my-app-comfyui-app.modal.run/
-    # my_url = f"https://{MODAL_ORG}--{item.container_id}-{app_suffix}.modal.run"
-
-    requests.post(item.callback_url, json={
-                  "machine_id": item.machine_id, "endpoint": url, "build_log": json.dumps(machine_logs)})
-    if item.machine_id in machine_logs_cache:
-        del machine_logs_cache[item.machine_id]
-
-    logger.info("done")
-    logger.info(url)
-
+async def send_callback(callback_url: str, data: dict):
+    """异步发送回调请求"""
+    async with aiohttp.ClientSession() as session:
+        try:
+            async with session.post(callback_url, json=data) as response:
+                response_data = await response.json()
+                logger.info(f"Callback response: {response_data}")
+                if response.status >= 400:
+                    logger.error(f"Callback failed with status {response.status}: {response_data}")
+                    raise aiohttp.ClientError(f"Callback failed with status {response.status}")
+        except aiohttp.ClientError as e:
+            logger.error(f"Network error sending callback: {str(e)}")
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error sending callback: {str(e)}")
+            raise
 
 def start_loop(loop):
     asyncio.set_event_loop(loop)
@@ -514,17 +589,29 @@ def start_loop(loop):
 
 # 在新的线程中运行协程
 def run_in_new_thread(coroutine):
-    # 创建新的事件循环
-    new_loop = asyncio.new_event_loop()
-    # 创建线程
-    t = threading.Thread(target=start_loop, args=(new_loop,), daemon=True)
-    t.start()
-    # 在新的线程中运行协程
-    asyncio.run_coroutine_threadsafe(coroutine, new_loop)
-    return t
+    """在新线程中运行协程，并确保proper cleanup"""
+    thread = AsyncLoopThread(daemon=True)
+    thread_tracker.add_thread(thread)
+    thread.start()
+
+    # 使用 weakref 确保线程在不再需要时被清理
+    thread_ref = weakref.ref(thread)
+
+    async def cleanup_wrapper():
+        try:
+            await coroutine
+        finally:
+            if thread_ref() is not None:
+                thread_ref().stop()
+
+    asyncio.run_coroutine_threadsafe(cleanup_wrapper(), thread.loop)
+    return thread
 
 
 if __name__ == "__main__":
     import uvicorn
-    # , log_level="debug"
-    uvicorn.run("main:app", host="0.0.0.0", port=8080, lifespan="on")
+    try:
+        uvicorn.run("main:app", host="0.0.0.0", port=8080, lifespan="on")
+    finally:
+        # 确保在程序退出时清理所有线程
+        thread_tracker.cleanup()
