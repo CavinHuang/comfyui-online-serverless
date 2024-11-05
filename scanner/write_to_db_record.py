@@ -128,6 +128,8 @@ def write_to_db_record(input_dict):
         return
     nodes_count = len(NODE_CLASS_MAPPINGS) - len(prev_nodes)
 
+    save_base_nodes_to_ddb(NODE_CLASS_MAPPINGS)
+
     # print('🍻 nodes_count',nodes_count, 'cur_node_package',cur_node_package)
     # logging.info(f"🍻 nodes_count => {nodes_count} cur_node_package => {cur_node_package}")
     if not os.path.isdir(module_path):
@@ -184,7 +186,7 @@ def write_to_db_record(input_dict):
 def save_base_nodes_to_ddb(NODE_CLASS_MAPPINGS):
     baseNodeDefs = {}
     for name in NODE_CLASS_MAPPINGS:
-        paths = analyze_class(NODE_CLASS_MAPPINGS[name])
+        # paths = analyze_class(NODE_CLASS_MAPPINGS[name])
         node_def = node_info(name)
         data = {
             "id": name+"~"+'comfyanonymous_ComfyUI',
@@ -193,9 +195,10 @@ def save_base_nodes_to_ddb(NODE_CLASS_MAPPINGS):
             "packageID": 'comfyanonymous_ComfyUI',
             "gitRepo": 'comfyanonymous/ComfyUI'}
         baseNodeDefs[name] = node_def
-        if paths is not None and len(paths) > 0:
-            data['folderPaths'] = json.dumps(paths, default=custom_serializer)
+        # if paths is not None and len(paths) > 0:
+        #     data['folderPaths'] = json.dumps(paths, default=custom_serializer)
         put_node_ddb(data)
+
     put_node_package_ddb({
                     'id': 'comfyanonymous_ComfyUI',
                     'gitRepo': "comfyanonymous/ComfyUI",

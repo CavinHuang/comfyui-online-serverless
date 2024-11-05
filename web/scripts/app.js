@@ -63,7 +63,7 @@ export class ComfyApp {
 		this.bodyTop = $el("div.comfyui-body-top", { parent: document.body });
 		this.bodyLeft = $el("div.comfyui-body-left", { parent: document.body });
 		this.bodyRight = $el("div.comfyui-body-right", { parent: document.body });
-		this.bodyBottom = $el("div.comfyui-body-bottom", { parent: document.body });		  
+		this.bodyBottom = $el("div.comfyui-body-bottom", { parent: document.body });
 		this.menu = new ComfyAppMenu(this);
 
 		/**
@@ -275,7 +275,7 @@ export class ComfyApp {
 			})
 		);
 	}
-	
+
 	#addRestoreWorkflowView() {
 		const serialize = LGraph.prototype.serialize;
 		const self = this;
@@ -398,7 +398,7 @@ export class ComfyApp {
 								window.open(url, "_blank");
 							},
 						},
-						...getCopyImageOption(img), 
+						...getCopyImageOption(img),
 						{
 							content: "Save Image",
 							callback: () => {
@@ -642,7 +642,7 @@ export class ComfyApp {
 
 				if (this.imgs?.length) {
 					const widgetIdx = this.widgets?.findIndex((w) => w.name === ANIM_PREVIEW_WIDGET);
-				
+
 					if(this.animatedImages) {
 						// Instead of using the canvas we'll use a IMG
 						if(widgetIdx > -1) {
@@ -1326,7 +1326,7 @@ export class ComfyApp {
 		});
 
 		api.addEventListener("progress", ({ detail }) => {
-			if (this.workflowManager.activePrompt?.workflow 
+			if (this.workflowManager.activePrompt?.workflow
 				&& this.workflowManager.activePrompt.workflow !== this.workflowManager.activeWorkflow) return;
 			this.progress = detail;
 			this.graph.setDirtyCanvas(true, false);
@@ -1424,9 +1424,9 @@ export class ComfyApp {
 			for (const node of app.graph._nodes) {
 				node.onGraphConfigured?.();
 			}
-			
+
 			const r = onConfigure?.apply(this, arguments);
-			
+
 			// Fire after onConfigure, used by primitves to generate widget using input nodes config
 			for (const node of app.graph._nodes) {
 				node.onAfterGraphConfigured?.();
@@ -1442,7 +1442,7 @@ export class ComfyApp {
 	async #loadExtensions() {
 	    // const extensions = await api.getExtensions();
 	    // this.logging.addEntry("Comfy.App", "debug", { Extensions: extensions });
-	
+
 	    const extensionPromises = this.extensionFilesPath.map(async ext => {
 	        try {
 	            await import(api.apiURL(ext));
@@ -1450,7 +1450,7 @@ export class ComfyApp {
 	            console.error("Error loading extension", ext, error);
 	        }
 	    });
-	
+
 	    await Promise.all(extensionPromises);
 		try {
 			this.menu.workflows.registerExtension(this);
@@ -1493,7 +1493,7 @@ export class ComfyApp {
 		if (!user || !users[user]) {
 			// This will rarely be hit so move the loading to on demand
 			const { UserSelectionScreen } = await import("./ui/userSelection.js");
-		
+
 			this.ui.menuContainer.style.display = "none";
 			const { userId, username, created } = await new UserSelectionScreen().show(users, user);
 			this.ui.menuContainer.style.display = "";
@@ -1638,7 +1638,7 @@ export class ComfyApp {
 	resizeCanvas() {
 		// Limit minimal scale to 1, see https://github.com/comfyanonymous/ComfyUI/pull/845
 		const scale = Math.max(window.devicePixelRatio, 1);
-		
+
 		// Clear fixed width and height while calculating rect so it uses 100% instead
 		this.canvasEl.height = this.canvasEl.width = "";
 		const { width, height } = this.canvasEl.getBoundingClientRect();
@@ -1875,7 +1875,7 @@ export class ComfyApp {
 		{
 			graphData = structuredClone(graphData);
 		}
-	
+
 		try {
 			this.workflowManager.setWorkflow(workflow);
 		} catch (error) {
@@ -1903,7 +1903,7 @@ export class ComfyApp {
 				this.canvas.ds.offset = graphData.extra.ds.offset;
 				this.canvas.ds.scale = graphData.extra.ds.scale;
 			}
-			
+
 			try {
 				this.workflowManager.activeWorkflow?.track()
 			} catch (error) {
@@ -2440,7 +2440,12 @@ export async function loadModuleBasedOnPath() {
   console.log('Loading module based on path');
   const queryParams = new URLSearchParams(window.location.search);
   const workflowVersionID = queryParams.get('workflowVersionID');
-  const packageID = queryParams.get('packageID');
+  let packageID = queryParams.get('packageID');
+
+  if (packageID === null) {
+    packageID = 'comfyanonymous_ComfyUI';
+  }
+
   if(workflowVersionID !== null) {
     const {ComfyViewWorkflowApp} = await import("./comfyspace_viewWorkflowApp.js");
     app = new ComfyViewWorkflowApp();

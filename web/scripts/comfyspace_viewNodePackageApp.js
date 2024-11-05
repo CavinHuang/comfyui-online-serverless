@@ -42,26 +42,26 @@ export class ComfyViewNodePackageApp extends ComfyApp {
       if (!this.graph || !this.allow_dragcanvas) {
           return;
       }
-  
+
       // Get the wheel delta
       var delta = e.wheelDeltaY != null ? e.wheelDeltaY : e.detail * -60;
-  
+
       // Scaling factor to adjust the sensitivity, might need tuning based on testing
       var sensitivity = 0.5;
-  
+
       // Apply the delta directly after scaling for sensitivity adjustment
       // this.ds.offset[1] -= delta * sensitivity;
       this.ds.offset[1] += delta * sensitivity;
-  
+
       // Mark the canvas as needing a redraw
       this.dirty_canvas = true;
       this.dirty_bgcanvas = true;
-  
+
       e.preventDefault();
       return false; // Prevent the default scrolling behavior of the browser
   };
-  
-  
+
+
   }
   async setup() {
     // to disable mousewheel zooming
@@ -71,9 +71,9 @@ export class ComfyViewNodePackageApp extends ComfyApp {
     // LGraphCanvas.prototype.processMouseDown = ()=>{}
     if(this.pacakgeID) {
       try {
-        const resp = await fetch("https://www.nodecafe.org/api/getNodePackage?id="+this.pacakgeID);
+        const resp = await fetch(`https://www.comfydocs.site/api/comfy/plugins/node-package/${this.pacakgeID}`);
         this.nodePackage = (await resp.json())?.data;
-        this.nodeDefs = JSON.parse(this.nodePackage.nodeDefs??"{}"); 
+        this.nodeDefs = JSON.parse(this.nodePackage.nodeDefs??"{}");
       } catch (error) {
         console.error("Error fetching node package", error);
       }
@@ -86,7 +86,7 @@ export class ComfyViewNodePackageApp extends ComfyApp {
 			window.parent.postMessage({ type: "onClickNodeEvent", nodeType: node.type }, window.location.origin);
 		});
 		this.canvasEl.addEventListener("mousemove", (e)=> {
-			var node = app.graph.getNodeOnPos( e.clientX, e.clientY, app.graph._nodes, 5 );		
+			var node = app.graph.getNodeOnPos( e.clientX, e.clientY, app.graph._nodes, 5 );
 			if(node) {
 				app.canvasEl.style.cursor = "pointer";
 			} else {
@@ -104,7 +104,7 @@ export class ComfyViewNodePackageApp extends ComfyApp {
       if (event.data === 'showAllNodes') {
         // Handle the "showAllNodes" message
         console.log('Handling showAllNodes message');
-    
+
         // Your code to show all nodes goes here
         // For example, this could involve altering the display style of certain elements
       }
@@ -123,12 +123,12 @@ export class ComfyViewNodePackageApp extends ComfyApp {
         const node = LiteGraph.createNode(nodeType);
         const nodeWidth = node.size[0];
         const nodeHeight = node.size[1];
-      
+
         // Check if the node can fit in the canvas width at all
         if (nodeWidth > canvasWidth) {
           console.warn(`Node of type ${nodeType} exceeds the canvas width and cannot be placed.`);
         }
-      
+
         // Preemptively move to the next row if the current node would exceed the canvas width
         if (currentPosition[0] + nodeWidth + gap > canvasWidth) {
           currentPosition[0] = LEFT_PADDING; // Reset X position to start of the next row
@@ -138,11 +138,11 @@ export class ComfyViewNodePackageApp extends ComfyApp {
           // The node fits in the current row, update maxHeightInRow
           maxHeightInRow = Math.max(maxHeightInRow, nodeHeight);
         }
-      
+
         // Place the node at the current position
         node.pos = [...currentPosition];
         this.graph.add(node);
-      
+
         // Move currentPosition right for the next node
         currentPosition[0] += nodeWidth + gap;
 
@@ -151,7 +151,7 @@ export class ComfyViewNodePackageApp extends ComfyApp {
         var message = { type: 'updateCanvasHeight', height: totalHeightRequired };
         this.graph.canvasHeightRequired = totalHeightRequired;
         // Send the message to the parent window
-        window.parent.postMessage(message, window.location.origin); 
+        window.parent.postMessage(message, window.location.origin);
         // Adjust canvas height to fit all nodes
       } catch(e) {
         console.error("Error adding node", nodeType, e);
