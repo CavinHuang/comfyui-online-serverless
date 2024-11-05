@@ -23,7 +23,7 @@ app = App(config["name"])
 if not deploy_test:
 
     dockerfile_image = (
-        modal.Image.debian_slim(force_build=True)
+        modal.Image.debian_slim()
         .env({
             "CIVITAI_TOKEN": config["civitai_token"],
         })
@@ -42,10 +42,11 @@ if not deploy_test:
             # "cd /comfyui-online-serverless/custom_nodes/ComfyUI-Manager && git reset --hard 9c86f62b912f4625fe2b929c7fc61deb9d16f6d3",
             # "cd /comfyui-online-serverless/custom_nodes/ComfyUI-Manager && pip install -r requirements.txt",
             # "cd /comfyui-online-serverless/custom_nodes/ComfyUI-Manager && mkdir startup-scripts",
+            force_build=True
         )
         .copy_local_file(f"{current_directory}/data/install_custom_node.sh", "/install_custom_node.sh")
         .run_commands("chmod +x /install_custom_node.sh")
-        .run_commands("/install_custom_node.sh")
+        .run_commands("/install_custom_node.sh", force_build=True)
         # .run_commands(
         #     # Install comfy deploy
         #     "cd /comfyui/custom_nodes && git clone https://github.com/BennyKok/comfyui-deploy.git",
@@ -53,19 +54,19 @@ if not deploy_test:
         # .copy_local_file(f"{current_directory}/data/extra_model_paths.yaml", "/comfyui-online-serverless")
 
         .copy_local_file(f"{current_directory}/data/start.sh", "/start.sh")
-        .run_commands("chmod +x /start.sh")
+        .run_commands("chmod +x /start.sh", force_build=True)
 
         # Restore the custom nodes first
         .copy_local_file(f"{current_directory}/data/restore_snapshot.py", "/")
         # .copy_local_file(f"{current_directory}/data/snapshot.json", "/comfyui-online-serverless/custom_nodes/ComfyUI-Manager/startup-scripts/restore-snapshot.json")
-        .run_commands("python restore_snapshot.py")
+        .run_commands("python restore_snapshot.py", force_build=True)
 
         # Then install the models
         .copy_local_file(f"{current_directory}/data/install_deps.py", "/")
         .copy_local_file(f"{current_directory}/data/models.json", "/")
         .copy_local_file(f"{current_directory}/data/deps.json", "/")
 
-        .run_commands("python install_deps.py")
+        .run_commands("python install_deps.py", force_build=True)
     )
 
 # Time to wait between API check attempts in milliseconds
