@@ -72,9 +72,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends git
 #     && rm -rf /var/lib/apt/lists/* \
 #     && apt-get clean
 
-COPY start.sh /start.sh
-RUN chmod +x /start.sh
+COPY start.sh /app/start.sh
+RUN chmod +x /app/start.sh
 
 EXPOSE 8188
 
-CMD ["./start.sh"]
+CMD ["/app/start.sh"]
