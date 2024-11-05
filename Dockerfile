@@ -72,6 +72,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends git
 #     && rm -rf /var/lib/apt/lists/* \
 #     && apt-get clean
 
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
+
 EXPOSE 8188
 
-CMD ["python3", "main.py", "--disable-cuda-malloc", "--cpu"]
+CMD ["./start.sh"]

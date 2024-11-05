@@ -8,8 +8,11 @@ import time
 from typing import Dict, Any
 from concurrent.futures import ThreadPoolExecutor
 
-package_report_url = "http://208.87.207.161:6000/api/comfy/plugins/node-def"
-node_report_url = "http://208.87.207.161:6000/api/comfy/nodes/node-def"
+# package_report_url = "http://208.87.207.161:6000/api/comfy/plugins/node-def"
+# node_report_url = "http://208.87.207.161:6000/api/comfy/nodes/node-def"
+
+package_report_url = "https://www.comfydocs.site/api/comfy/plugins/node-def"
+node_report_url = "https://www.comfydocs.site/api/comfy/nodes/node-def"
 
 class RequestQueue:
     def __init__(self, max_workers=3, queue_size=100):
