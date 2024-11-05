@@ -23,7 +23,7 @@ app = App(config["name"])
 if not deploy_test:
 
     dockerfile_image = (
-        modal.Image.debian_slim()
+        modal.Image.debian_slim(force_build=True)
         .env({
             "CIVITAI_TOKEN": config["civitai_token"],
         })

@@ -2,47 +2,98 @@ import os
 import json
 import requests
 import logging
+import queue
+import threading
+import time
+from typing import Dict, Any
+from concurrent.futures import ThreadPoolExecutor
 
 package_report_url = "http://208.87.207.161:6000/api/comfy/plugins/node-def"
 node_report_url = "http://208.87.207.161:6000/api/comfy/nodes/node-def"
 
+class RequestQueue:
+    def __init__(self, max_workers=3, queue_size=100):
+        self.queue = queue.Queue(maxsize=queue_size)
+        self.executor = ThreadPoolExecutor(max_workers=max_workers)
+        self.failed_requests = queue.Queue()
+        self._start_worker()
+
+    def _make_request(self, url: str, data: Dict[str, Any]) -> None:
+        for attempt in range(3):
+            try:
+                res = requests.post(
+                    url,
+                    json=data,
+                    headers={'Authorization': 'Bearer ' + 'token'},
+                    timeout=10
+                )
+                res.raise_for_status()
+                logging.info(f"✅ Successfully posted data: {data.get('nodeType', '')}")
+                time.sleep(0.1)  # 请求间隔
+                return
+            except Exception as e:
+                if attempt == 2:  # 最后一次尝试失败
+                    logging.error(f"❌ Failed after 3 attempts: {str(e)}, data: {data}")
+                    self.failed_requests.put((url, data))
+                    return
+                time.sleep(1 * (attempt + 1))
+                continue
+
+    def _start_worker(self):
+        def worker():
+            while True:
+                try:
+                    url, data = self.queue.get()
+                    self._make_request(url, data)
+                except Exception as e:
+                    logging.error(f"Worker error: {str(e)}")
+                finally:
+                    self.queue.task_done()
+
+        # 启动工作线程
+        for _ in range(3):  # 创建3个工作线程
+            thread = threading.Thread(target=worker, daemon=True)
+            thread.start()
+
+    def add_request(self, url: str, data: Dict[str, Any]):
+        self.queue.put((url, data))
+
+    def wait_completion(self):
+        self.queue.join()
+
+    def get_failed_requests(self):
+        failed = []
+        while not self.failed_requests.empty():
+            failed.append(self.failed_requests.get())
+        return failed
+
+# 创建全局请求队列
+request_queue = RequestQueue()
+
 def put_node_package_ddb(item):
-    # requests.post('http://localhost:3000/api/node/putNodePackage', json=item, headers={'Authorization': 'Bearer ' + 'token'})
-    # requests.post('http://127.0.0.1:6233/putNodePackage', json=item)
-    # print('🍻 item put_node_package_ddb',item)
-    # logging.info(f"🍻 item put_node_package_ddb => {item}")
     postData = {
-      "packageID": item['id'],
-      "gitRepo": item['gitRepo'],
-      "nodeDefs": item['nodeDefs'],
-      "nameID": item['nameID'],
-      "latestCommit": item['latestCommit']
+        "packageID": item['id'],
+        "gitRepo": item['gitRepo'],
+        "nodeDefs": item['nodeDefs'],
+        "nameID": item['nameID'],
+        "latestCommit": item['latestCommit']
     }
-    logging.info(f"🍻 postData package_report_url => {package_report_url}")
-    logging.info(f"🍻 postData => {postData}")
-    res = requests.post(package_report_url, json=postData, headers={'Authorization': 'Bearer ' + 'token'})
-    print('🍻 res put_node_package_ddb',res)
-    logging.info(f"🍻 res put_node_package_ddb => {res}")
+    request_queue.add_request(package_report_url, postData)
 
 def put_node_ddb(item):
-    # requests.post('http://127.0.0.1:6233/putNode', json=item)
-    # print('🍻 item put_node_ddb',item)
-    # logging.info(f"🍻 item put_node_ddb => {item}")
-
+    folderPaths = []
+    if 'folderPaths' in item:
+      folderPaths = item['folderPaths']
     postData = {
-      "packName": item['packName'],
-      "nodeName": item['nodeType'],
-      "nodeID": item['id'],
-      "nodeType": item['nodeType'],
-      "nodeDef": item['nodeDef'],
-      "folderPaths": item['folderPaths'],
-      "latestCommit": item['latestCommit']
+        "packName": item['packName'],
+        "nodeName": item['nodeType'],
+        "nodeID": item['id'],
+        "nodeType": item['nodeType'],
+        "nodeDef": item['nodeDef'],
+        "folderPaths": folderPaths,
+        "latestCommit": item['latestCommit']
     }
-    # logging.info(f"🍻 postData put_node_ddb => {postData}")
-    # logging.info(f"🍻 node_report_url => {node_report_url}")
-    res = requests.post(node_report_url, json=postData, headers={'Authorization': 'Bearer ' + 'token'})
-    # print('🍻 res put_node_ddb',res)
-    logging.info(f"🍻 res put_node_ddb => {res}")
+    request_queue.add_request(node_report_url, postData)
 
 ######v3
 
@@ -85,7 +136,7 @@ def write_to_db_record(input_dict):
         try:
             if name not in prev_nodes:
                 logging.info(f"🍻 +++++++++name => {name}")
-                paths = analyze_class(NODE_CLASS_MAPPINGS[name])
+                # paths = analyze_class(NODE_CLASS_MAPPINGS[name])
                 # all_node = fetch_node_info()
                 node_def = node_info(input_dict, name)
                 data = {
@@ -97,8 +148,8 @@ def write_to_db_record(input_dict):
                     "gitRepo": username + '/' + repo_name,
                     "latestCommit": latest_commit}
                 custom_node_defs[name] = node_def
-                if paths is not None and len(paths) > 0:
-                    data['folderPaths'] = json.dumps(paths, default=custom_serializer)
+                # if paths is not None and len(paths) > 0:
+                #     data['folderPaths'] = json.dumps(paths, default=custom_serializer)
                 put_node_ddb(data)
         except Exception as e:
             print("❌analyze imported node: error",e)
@@ -116,6 +167,15 @@ def write_to_db_record(input_dict):
         'nodeDefs': json.dumps(custom_node_defs),
         "latestCommit": latest_commit
     })
+
+    # 等待所有请求完成
+    request_queue.wait_completion()
+
+    # 检查失败的请求
+    failed_requests = request_queue.get_failed_requests()
+    if failed_requests:
+        logging.error(f"Failed requests: {len(failed_requests)}")
+        # 可以选择重试失败的请求或将其保存到文件中
 
 # For COMFYUI BASE NODES
 def save_base_nodes_to_ddb(NODE_CLASS_MAPPINGS):
