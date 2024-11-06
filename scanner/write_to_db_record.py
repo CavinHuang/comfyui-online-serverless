@@ -128,7 +128,7 @@ def write_to_db_record(input_dict):
         return
     nodes_count = len(NODE_CLASS_MAPPINGS) - len(prev_nodes)
 
-    save_base_nodes_to_ddb(NODE_CLASS_MAPPINGS)
+    save_base_nodes_to_ddb(NODE_CLASS_MAPPINGS, input_dict)
 
     # print('🍻 nodes_count',nodes_count, 'cur_node_package',cur_node_package)
     # logging.info(f"🍻 nodes_count => {nodes_count} cur_node_package => {cur_node_package}")
@@ -183,14 +183,16 @@ def write_to_db_record(input_dict):
         # 可以选择重试失败的请求或将其保存到文件中
 
 # For COMFYUI BASE NODES
-def save_base_nodes_to_ddb(NODE_CLASS_MAPPINGS):
+def save_base_nodes_to_ddb(NODE_CLASS_MAPPINGS, input_dict):
     baseNodeDefs = {}
     for name in NODE_CLASS_MAPPINGS:
         # paths = analyze_class(NODE_CLASS_MAPPINGS[name])
-        node_def = node_info(name)
+        print('🍻 name',name)
+        node_def = node_info(input_dict, name)
         data = {
             "id": name+"~"+'comfyanonymous_ComfyUI',
             "nodeType": name,
+            "packName": 'comfyanonymous/ComfyUI',
             "nodeDef": json.dumps(node_def),
             "packageID": 'comfyanonymous_ComfyUI',
             "gitRepo": 'comfyanonymous/ComfyUI'}
