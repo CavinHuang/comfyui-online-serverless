@@ -128,7 +128,7 @@ def write_to_db_record(input_dict):
         return
     nodes_count = len(NODE_CLASS_MAPPINGS) - len(prev_nodes)
 
-    save_base_nodes_to_ddb(NODE_CLASS_MAPPINGS, input_dict)
+    # save_base_nodes_to_ddb(NODE_CLASS_MAPPINGS, input_dict)
 
     # print('🍻 nodes_count',nodes_count, 'cur_node_package',cur_node_package)
     # logging.info(f"🍻 nodes_count => {nodes_count} cur_node_package => {cur_node_package}")
@@ -185,6 +185,10 @@ def write_to_db_record(input_dict):
 # For COMFYUI BASE NODES
 def save_base_nodes_to_ddb(NODE_CLASS_MAPPINGS, input_dict):
     baseNodeDefs = {}
+
+    username, repo_name, default_branch_name, latest_commit = get_repo_user_and_name('.')
+
+    print('🍻 username',username, 'repo_name',repo_name, 'default_branch_name',default_branch_name, 'latest_commit',latest_commit)
     for name in NODE_CLASS_MAPPINGS:
         # paths = analyze_class(NODE_CLASS_MAPPINGS[name])
         print('🍻 name',name)
@@ -195,7 +199,10 @@ def save_base_nodes_to_ddb(NODE_CLASS_MAPPINGS, input_dict):
             "packName": 'comfyanonymous/ComfyUI',
             "nodeDef": json.dumps(node_def),
             "packageID": 'comfyanonymous_ComfyUI',
-            "gitRepo": 'comfyanonymous/ComfyUI'}
+            "gitRepo": 'comfyanonymous/ComfyUI',
+            "latestCommit": 'master',
+
+          }
         baseNodeDefs[name] = node_def
         # if paths is not None and len(paths) > 0:
         #     data['folderPaths'] = json.dumps(paths, default=custom_serializer)
@@ -210,7 +217,8 @@ def save_base_nodes_to_ddb(NODE_CLASS_MAPPINGS, input_dict):
                     'status': 'IMPORT_SUCCESS',
                     'defaultBranch': 'master',
                     'totalNodes':len(NODE_CLASS_MAPPINGS),
-                    'nodeDefs': json.dumps(baseNodeDefs)
+                    'nodeDefs': json.dumps(baseNodeDefs),
+                    "latestCommit": 'master'
                 })
 
 # copied from server.py

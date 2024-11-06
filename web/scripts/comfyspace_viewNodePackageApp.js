@@ -19,11 +19,20 @@ const COMFYUI_CORE_EXTENSIONS = [
   "/extensions/core/saveImageExtraOutput.js",
   "/extensions/core/slotDefaults.js",
   "/extensions/core/snapToGrid.js",
-  "/extensions/core/undoRedo.js",
+  // "/extensions/core/undoRedo.js",
   "/extensions/core/uploadImage.js",
   "/extensions/core/widgetInputs.js",
-  "/extensions/dp.js",
+  // "/extensions/dp.js",
 ]
+
+function getParams(key = []) {
+  const params = new URLSearchParams(window.location.search);
+  return key.reduce((acc, k) => {
+    acc[k] = params.get(k);
+    return acc;
+  }, {});
+}
+
 export class ComfyViewNodePackageApp extends ComfyApp {
   /** @type {{nodeDefs:string,jsFilePaths:string}} */
   nodePackage = null;
@@ -33,9 +42,9 @@ export class ComfyViewNodePackageApp extends ComfyApp {
   canvasHeightRequired = 500;
   constructor() {
     super();
-    const params = new URLSearchParams(window.location.search);
-    this.pacakgeID = params.get("packageID").replaceAll("/", "_");
-    this.nodeType = params.get('node');
+    const params = getParams(['packageID', 'node']);
+    this.pacakgeID = params.packageID ? params.packageID.replaceAll("/", "_") : 'comfyanonymous_ComfyUI';
+    this.nodeType = params.node;
   }
   async setupMouseWheel() {
     LGraphCanvas.prototype.processMouseWheel = function(e) {
@@ -71,7 +80,12 @@ export class ComfyViewNodePackageApp extends ComfyApp {
     // LGraphCanvas.prototype.processMouseDown = ()=>{}
     if(this.pacakgeID) {
       try {
-        const resp = await fetch(`https://www.comfydocs.site/api/comfy/plugins/node-package/${this.pacakgeID}`);
+        // const resp = await fetch(`https://www.comfydocs.site/api/comfy/plugins/node-package/${this.pacakgeID}`);
+        const resp = await fetch(`http://localhost:3000/api/comfy/plugins/node-package/${this.pacakgeID}`, {
+          headers: {
+            'Authorization': 'Bearer ' + 'token'
+          }
+        });
         this.nodePackage = (await resp.json())?.data;
         this.nodeDefs = JSON.parse(this.nodePackage.nodeDefs??"{}");
       } catch (error) {
