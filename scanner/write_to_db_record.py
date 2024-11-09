@@ -26,7 +26,7 @@ class RequestQueue:
             try:
                 res = requests.post(
                     url,
-                    json=data,
+                    data=str(json.dumps(data)),
                     headers={'Authorization': 'Bearer ' + 'token'},
                     timeout=10
                 )
