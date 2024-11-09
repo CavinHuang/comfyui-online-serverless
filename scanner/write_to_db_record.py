@@ -26,7 +26,7 @@ class RequestQueue:
             try:
                 res = requests.post(
                     url,
-                    data=str(json.dumps(data)),
+                    data=data,
                     headers={'Authorization': 'Bearer ' + 'token'},
                     timeout=10
                 )
@@ -81,6 +81,8 @@ def put_node_package_ddb(item):
         "nameID": item['nameID'],
         "latestCommit": item['latestCommit']
     }
+    # 转换为JSON字符串并进行转义处理
+    postData = json.dumps(postData, ensure_ascii=False).replace('"', '\\"')
     request_queue.add_request(package_report_url, postData)
 
 def put_node_ddb(item):
@@ -96,6 +98,8 @@ def put_node_ddb(item):
         "folderPaths": folderPaths,
         "latestCommit": item['latestCommit']
     }
+    # 转换为JSON字符串并进行转义处理
+    postData = json.dumps(postData, ensure_ascii=False).replace('"', '\\"')
     request_queue.add_request(node_report_url, postData)
 
 ######v3
