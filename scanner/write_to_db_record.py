@@ -31,7 +31,8 @@ class RequestQueue:
                     timeout=10
                 )
                 res.raise_for_status()
-                logging.info(f"✅ Successfully posted data: {data.get('nodeType', '')}")
+                json_data = json.loads(data)
+                logging.info(f"✅ Successfully posted data: {json_data.get('nodeType', '')}")
                 time.sleep(0.1)  # 请求间隔
                 return
             except Exception as e:
