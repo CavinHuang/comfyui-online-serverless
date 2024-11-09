@@ -83,7 +83,7 @@ def put_node_package_ddb(item):
         "latestCommit": item['latestCommit']
     }
     # 转换为JSON字符串并进行转义处理
-    request_queue.add_request(package_report_url, postData)
+    request_queue.add_request(package_report_url, json.dumps(postData))
 
 def put_node_ddb(item):
     folderPaths = []
