@@ -6,6 +6,7 @@ on:
     paths:
       - 'builder/modal-builder/**'
       - '.github/workflows/deploy-builder.yml'
+      - 'scanner/**'
 
 jobs:
   deploy-app:

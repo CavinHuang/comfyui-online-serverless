@@ -9,6 +9,7 @@ on:
       - 'LICENSE'
       - '.github/workflows/deploy-builder.yml'
       - 'builder/modal-builder/**'
+      - 'scanner/**'
 
 jobs:
   deploy-app:
