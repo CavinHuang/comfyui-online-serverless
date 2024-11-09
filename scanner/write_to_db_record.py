@@ -82,7 +82,6 @@ def put_node_package_ddb(item):
         "latestCommit": item['latestCommit']
     }
     # 转换为JSON字符串并进行转义处理
-    postData = json.dumps(postData, ensure_ascii=False).replace('"', '\\"')
     request_queue.add_request(package_report_url, postData)
 
 def put_node_ddb(item):
@@ -99,7 +98,6 @@ def put_node_ddb(item):
         "latestCommit": item['latestCommit']
     }
     # 转换为JSON字符串并进行转义处理
-    postData = json.dumps(postData, ensure_ascii=False).replace('"', '\\"')
     request_queue.add_request(node_report_url, postData)
 
 ######v3
@@ -152,7 +150,7 @@ def write_to_db_record(input_dict):
                     "id": name+"~"+packageID,
                     "packName": repo_name,
                     "nodeType": name,
-                    "nodeDef": json.dumps(node_def),
+                    "nodeDef": json.dumps(json.dumps(node_def)),
                     "packageID": packageID,
                     "gitRepo": username + '/' + repo_name,
                     "latestCommit": latest_commit}
