@@ -80,12 +80,16 @@ export class ComfyViewNodePackageApp extends ComfyApp {
     // LGraphCanvas.prototype.processMouseDown = ()=>{}
     if(this.pacakgeID) {
       try {
-        // const resp = await fetch(`https://www.comfydocs.site/api/comfy/plugins/node-package/${this.pacakgeID}`);
-        const resp = await fetch(`http://localhost:3000/api/comfy/plugins/node-package/${this.pacakgeID}`, {
+        const resp = await fetch(`https://www.comfydocs.site/api/comfy/plugins/node-package/${this.pacakgeID}`, {
           headers: {
             'Authorization': 'Bearer ' + 'token'
           }
         });
+        // const resp = await fetch(`http://localhost:3000/api/comfy/plugins/node-package/${this.pacakgeID}`, {
+        //   headers: {
+        //     'Authorization': 'Bearer ' + 'token'
+        //   }
+        // });
         this.nodePackage = (await resp.json())?.data;
         this.nodeDefs = JSON.parse(this.nodePackage.nodeDefs??"{}");
       } catch (error) {
