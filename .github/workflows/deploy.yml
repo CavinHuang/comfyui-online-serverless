@@ -24,7 +24,7 @@ jobs:
     steps:
       # 拉取main分支代码
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           fetch-depth: 1  # 优化克隆深度
 
@@ -79,14 +79,13 @@ jobs:
           cache-from: |
             type=local,src=/tmp/.buildx-cache
             type=registry,ref=${{ env.REGISTRY_REPO }}:cache
-          cache-to: |
-            type=local,dest=/tmp/.buildx-cache-new,mode=max
-            type=registry,ref=${{ env.REGISTRY_REPO }}:cache,mode=max
+          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
           platforms: linux/amd64
           compression: zstd  # 使用更好的压缩算法
           labels: |
             org.opencontainers.image.source=${{ github.event.repository.html_url }}
             org.opencontainers.image.revision=${{ github.sha }}
+          no-cache: true # 禁用缓存,强制重新构建
 
       # 更新缓存
       - name: Move cache
