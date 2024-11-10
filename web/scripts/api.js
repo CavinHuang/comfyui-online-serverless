@@ -481,7 +481,7 @@ class ComfyApi extends EventTarget {
 
 import { app } from "./app.js";
 import { ComfyWorkflow } from "./workflows.js";
-import {serverNodeDefs} from '/serverNodeDefs.js'
+// import {serverNodeDefs} from '/serverNodeDefs.js'
 export class ServerlessComfyApi extends ComfyApi {
 	machine = null;
 	initialLoad = true;
@@ -490,13 +490,14 @@ export class ServerlessComfyApi extends ComfyApi {
 		if(!this.initialLoad) {
 			const res = await fetch("/api/machine/refreshMachineNodeDefs?machineID="+this.machine.id)
 			.then(res => res.json());
+
 			if (!res) {
 				alert("❌ Error fetching machine nodes");
 				throw new Error("Error fetching machine nodes");
 			}
 			return res;
 		}
-		
+
 		this.initialLoad = false;
 		if(!this.machine) {
 			return serverNodeDefs;
@@ -522,13 +523,13 @@ export class ServerlessComfyApi extends ComfyApi {
 		let error = null;
 		for (const nodeID of Object.keys(output)) {
 			const node = output[nodeID];
-			
+
 			if (node.inputs) {
 				Object.keys(node.inputs).forEach((inputName) => {
 					const value = node.inputs?.[inputName];
 					if (typeof value != "string") return;
 					// Check if it's a model file
-					
+
 					const valueList1 = LiteGraph.registered_node_types[node.class_type].nodeData?.input?.required?.[inputName]?.[0];
 					const valueList2 = LiteGraph.registered_node_types[node.class_type].nodeData?.input?.optional?.[inputName]?.[0];
 					if (!Array.isArray(valueList1) && !Array.isArray(valueList2)) {
@@ -538,7 +539,7 @@ export class ServerlessComfyApi extends ComfyApi {
 					if (imageFileExtensions.some((ext) => value.endsWith(ext))) {
 						if (deps?.images?.[value]?.url ) {
 							newDeps.images[value] = deps.images[value];
-							return;	
+							return;
 						}
 					}
 					if (valueList1?.includes(value) || valueList2?.includes(value)) {
@@ -550,7 +551,7 @@ export class ServerlessComfyApi extends ComfyApi {
 							return;
 						}
 					}
-				
+
 					error = {
 						details:"",
 						type: 'value_not_in_list',
@@ -582,7 +583,7 @@ export class ServerlessComfyApi extends ComfyApi {
 		  };
 	}
 	apiURL(route) {
-		
+
 		if(route.startsWith('/view?filename=')) {
 			const searchParams = new URLSearchParams(route.split('?')[1]);
 			console.log('filename', searchParams.get('filename'));
@@ -754,7 +755,7 @@ export class ServerlessComfyApi extends ComfyApi {
 				const comfyworkflow = new ComfyWorkflow(app.workflowManager, filename+'.json', [filename+'.json']);
 				app.workflowManager.setWorkflow(comfyworkflow)
 				return;
-			} 
+			}
 			if (!app.graph.extra.workflow_id) {
 				graph.extra.workflow_id = curWorkflowID;
 			} else if(graph.extra.workflow_id !== curWorkflowID) {
@@ -800,8 +801,8 @@ export class ServerlessComfyApi extends ComfyApi {
 			window.parent.postMessage({ type: 'change_url', url:`/comfyui/${id}?machine=${api.machine?.id ?? ''}` }, '*');
 		}
 	}
-	
-	
+
+
 }
 
 export const modelFileExtensions = [
@@ -838,6 +839,6 @@ window.addEventListener("message", (event) => {
 			folder: event.data.data.model.folder,
 			hash: event.data.data.model.hash,
 		}
-		
+
 	}
   });
